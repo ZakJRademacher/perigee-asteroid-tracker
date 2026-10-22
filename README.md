@@ -19,7 +19,7 @@ NASA NeoWs supplies the encounter catalog; NASA/JPL Horizons supplies geometric 
 
 Zak directed the concept, feature requirements and visual iterations. This is an independent learning demonstration.
 
-The interface uses HTML, CSS and JavaScript; Three.js renders the viewer. A Cloudflare Worker retrieves and caches Horizons data through a same-origin endpoint. Node.js runs the build and 63 automated tests. No database or private NASA API key is required.
+The interface uses HTML, CSS and JavaScript; Three.js renders the viewer. A Cloudflare Worker retrieves and caches Horizons data through a same-origin endpoint. Node.js runs the build and 64 automated tests. No database or private NASA API key is required.
 
 ## Use
 
@@ -104,4 +104,5 @@ The **View settings → Click again to close details** preference is enabled by 
 While Live clock is enabled and the page is visible, the app checks once per minute whether the catalog refresh interval has elapsed. Background refresh preserves the selected object and scrub time for the same window. Likely nearby candidates are prioritized for downloads; the priority score never substitutes for JPL coordinates. IndexedDB stores successful vectors beyond localStorage's small string quota, with a one-hour source-timestamp expiry and graceful fallback if storage is unavailable. Existing marker meshes are reused, and decorative star redraws are limited to 20 frames per second without repeatedly projecting DOM marker labels.
 
 
-The Earth-centered 3D model includes a labeled Sun-direction reference at the edge of the field. Its direction follows the displayed UTC epoch and the same equatorial frame as the globe and asteroids. It is a direction cue: Sun size and distance are off scale. The information panel keeps a fixed outer height (1,020 px desktop; 640 px on narrow screens), scrolls internally and no longer triggers page scrolling when a table row is selected.
+
+The 3D Sun is a glowing sphere at its modeled geometric position relative to Earth, using Astronomy Engine at the displayed UTC epoch. Its distance and 695,700 km radius use the asteroid position scale; Earth remains enlarged. It supplies the scene point light, and the globe shader uses the same geometric direction. Since the Sun is roughly 390 LD away, it lies beyond the 100 LD asteroid field. **Fit Earth + Sun** frames both; **Reset view** restores the encounter field. No solar-system view or gravity vectors are included. The detail panel keeps a fixed outer height (1,020 px desktop; 640 px on narrow screens), scrolls internally, and table selection no longer scrolls the page automatically.

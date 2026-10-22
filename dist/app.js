@@ -94,3 +94,5 @@ document.addEventListener('click',e=>{if(e.target.closest('#close-details')){sel
 function refreshLiveCatalog(){const interval=(provenance.refreshAfterSeconds??900)*1000;if(!document.hidden&&$('#live-clock').checked&&positionWindow&&Date.now()-lastRequest>=interval&&Date.now()-Date.parse(provenance.retrieved_at)>=interval)load(dateKey());}
 setInterval(refreshLiveCatalog,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshLiveCatalog();});
+
+$('#fit-sun').addEventListener('click',()=>{if(viewMode==='3d')viewer?.fitSun();else toast('Earth + Sun is available in 3D space.');});

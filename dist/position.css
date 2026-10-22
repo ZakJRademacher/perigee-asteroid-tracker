@@ -20,6 +20,7 @@
 
 
 .observatory{overflow-anchor:none}
-.sun-reference-label{position:absolute;z-index:4;pointer-events:none;transform:translate(-50%,17px);font-size:9px;color:#f2ca83;white-space:nowrap;background:#111821c9;padding:4px 7px;border:1px solid #6b5836;border-radius:4px}
 
 .observatory>.map-panel{height:1020px;min-height:0}.observatory>.map-panel>.space-map{min-height:0}.observatory>.map-panel:fullscreen{height:100vh}@media(max-width:800px){.observatory>.map-panel{height:850px}}@media(max-width:480px){.observatory>.map-panel{height:800px}}
+
+.viewer-toolbar{flex-wrap:wrap}

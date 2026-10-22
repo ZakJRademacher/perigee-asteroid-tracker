@@ -46,6 +46,21 @@ test('geographic UV directions map Greenwich, north and east without mirroring',
  assert.ok(angle(surfaceDirection(s,0,90),s.west.map(v=>-v))<.00001);
  assert.ok(angle(surfaceDirection(s,0,180),s.prime.map(v=>-v))<.00001);
 });
+
+test('geometric Sun position retains real distance, shared lighting direction and date-dependent motion',()=>{
+ const epoch=Date.parse('2026-10-22T00:00:00Z'),state=earthOrientation(epoch);
+ // Independent JPL Horizons: Earth 399 / center 500@10, geometric
+ // J2000 ecliptic km; negate and apply the renderer's [x,z,-y] transform.
+ const reference=[-131186243.7067239,5161.113070707768,70444728.93257087];
+ assert.ok(Math.hypot(...state.sunPositionKm.map((v,k)=>v-reference[k]))<1000);
+ const distance=Math.hypot(...state.sunPositionKm);
+ assert.ok(distance>147e6&&distance<153e6);
+ for(let k=0;k<3;k++)assert.ok(Math.abs(state.sunPositionKm[k]/distance-state.sun[k])<1e-12);
+ const tomorrow=earthOrientation(epoch+86400000),travel=Math.hypot(...tomorrow.sunPositionKm.map((v,k)=>v-state.sunPositionKm[k]));
+ assert.ok(travel>2.4e6&&travel<2.8e6);
+ const framed=frameVector(equatorialFrame(epoch),state.sunPositionKm);
+ assert.ok(Math.abs(Math.hypot(...framed)-distance)<1e-6);
+});
 test('invalid or unsupported Earth epochs fail without inventing an orientation',()=>{
  for(const epoch of [NaN,Infinity,Date.parse('1900-01-01'),Date.parse('2100-01-01')])assert.throws(()=>earthOrientation(epoch),RangeError);
 });
