@@ -1,0 +1,9 @@
+evidence/
+deliverables/
+__pycache__/
+*.tar.gz
+node_modules/
+dist/server/
+dist/.openai/
+.cloudflare/
+.env*

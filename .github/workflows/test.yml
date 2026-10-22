@@ -1,0 +1,25 @@
+name: Validate Perigee
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+      - name: Build the portable Worker
+        run: node tools/build-worker.mjs
+      - name: Validate the Worker entrypoint
+        run: node tools/validate-worker.mjs
+      - name: Check application syntax
+        run: node --check dist/app.js
+      - name: Run the regression suite
+        run: node --test tests/model.test.mjs tests/viewer-media.test.mjs tests/ephemeris.test.mjs tests/worker.test.mjs

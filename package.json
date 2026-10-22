@@ -1,0 +1,19 @@
+{
+  "name": "perigee-nasa-asteroid-explorer",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/model.test.mjs tests/viewer-media.test.mjs tests/ephemeris.test.mjs tests/worker.test.mjs",
+    "check": "node --check dist/app.js",
+    "build": "node tools/build-worker.mjs",
+    "preview": "node tools/serve-worker.mjs",
+    "build:cloudflare": "node tools/build-worker.mjs && cf build",
+    "deploy:cloudflare": "pnpm run build:cloudflare && cf deploy --prebuilt --mode production"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.3",
+    "cf": "1.0.0-beta.20",
+    "vite": "8.3.4"
+  }
+}
