@@ -42,3 +42,18 @@ test('only close approaches inside the five-day window enter catalog rows, inclu
  const feed={near_earth_objects:{[start]:[neo]}};
  assert.deepEqual(encounterRows(feed,start).rows.map(r=>r.epoch),times.slice(1,3));
 });
+
+test('provider credentials and unused URLs never enter fresh, persisted or seeded public catalog data',async()=>{
+ const privateKey='test-only-upstream-credential-1234567890',link='https://api.nasa.gov/neo/rest/v1/neo/1234567?api_key='+privateKey;
+ const neo={id:'1234567',name:'Boundary test',links:{self:link},unused_secret:privateKey,estimated_diameter:{meters:{estimated_diameter_min:10,estimated_diameter_max:20,links:{self:link}}},close_approach_data:[{epoch_date_close_approach:Date.parse(start),orbiting_body:'Earth',relative_velocity:{kilometers_per_second:'10',links:{self:link}},miss_distance:{kilometers:'1000000'},links:{self:link}}]};
+ const feed={near_earth_objects:{[start]:[neo]}},now=()=>Date.parse(start);let persisted;
+ const cache={match:async()=>persisted?new Response(persisted):null,put:async(_,response)=>{persisted=await response.text();}};
+ const service=makeCatalogService({apiKey:privateKey,now,persistentCache:cache,fetcher:async url=>{assert.equal(new URL(url).searchParams.get('api_key'),privateKey);return {ok:true,json:async()=>feed};}});
+ const fresh=await service(start),cached=await service(start),reload=await makeCatalogService({now,persistentCache:cache,fetcher:async()=>{throw Error('Unexpected upstream request');}})(start);
+ const seeded=await makeCatalogService({now,seed:{start,end:'2026-10-26',retrieved_at:start,feed}})(start);
+ for(const result of [fresh,cached,reload,seeded]){
+  const text=JSON.stringify(result);assert.equal(text.includes(privateKey),false);assert.equal(text.includes('api_key'),false);
+  const rows=encounterRows(result.feed,start).rows;assert.equal(rows.length,1);assert.equal(rows[0].min,10);assert.equal(rows[0].max,20);assert.equal(rows[0].speed,10);assert.equal(rows[0].km,1000000);
+ }
+ assert.equal(persisted.includes(privateKey),false);
+});
