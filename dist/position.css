@@ -3,3 +3,7 @@
 @media(max-width:480px){.position-controls{margin:14px 14px 0;padding:12px}.position-clock{gap:10px}.position-clock label{width:100%;font-size:8px}.position-clock input{font-size:11px;padding:7px;width:172px}.position-options{gap:9px}.position-options #ephemeris-status{flex-basis:100%;order:3}.space-map{height:370px;min-height:370px}#map-empty{font-size:9px;padding:7px;left:14px}.position-detail{margin-top:10px}.position-clock #clear-selection{font-size:8px}}
 
 .track-legend{display:inline-block;width:15px;border-top:1px solid var(--mint)}
+
+.earth-credit{margin:0;padding:6px 24px;color:#8ca5a0;font-size:9px;line-height:1.6}.live-clock-label{display:flex;align-items:center;gap:5px;white-space:nowrap}.position-clock .live-clock-label input{width:auto;margin:0;padding:0;accent-color:var(--mint)}@media(max-width:480px){.position-clock .live-clock-label{width:auto}.earth-credit{padding:6px 15px;font-size:8px}}
+
+.timeline-panel,.timeline{min-width:0}.timeline{display:flex;gap:10px;overflow-x:auto;max-width:100%;padding-bottom:8px}.timeline .day-button{flex:0 0 40px}.timeline .day-label{white-space:nowrap}

@@ -22,4 +22,4 @@ jobs:
       - name: Check application syntax
         run: node --check dist/app.js
       - name: Run the regression suite
-        run: node --test tests/model.test.mjs tests/viewer-media.test.mjs tests/ephemeris.test.mjs tests/worker.test.mjs
+        run: node --test tests/model.test.mjs tests/viewer-media.test.mjs tests/ephemeris.test.mjs tests/worker.test.mjs tests/earth.test.mjs tests/catalog.test.mjs
