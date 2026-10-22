@@ -1,0 +1,11 @@
+{
+  "package": "astronomy-engine",
+  "version": "2.1.19",
+  "source": "https://registry.npmjs.org/astronomy-engine/-/astronomy-engine-2.1.19.tgz",
+  "integrity": "sha512-8yWKNf7UeNbH458h3sAJ6ZgAjE5jTXp/mNNRFoC20j2SHwZIjAQeEsBB2Q3uCFRaTCCJRv33K2XhkhZQMXoX6w==",
+  "files_sha256": {
+    "astronomy.js": "068f1445ed0c636c94818fe6d20d7d125120e605e0bab9fc4675c3d531be5ad7"
+  },
+  "license": "MIT; full notice retained in astronomy.js",
+  "modifications": "None"
+}

@@ -1,0 +1,6 @@
+* text=auto eol=lf
+# Preserve exact bytes for verified third-party code and original NASA imagery.
+dist/vendor/** -text
+dist/assets/*.jpg -text
+dist/assets/*.gif -text
+dist/assets/*.png -text
