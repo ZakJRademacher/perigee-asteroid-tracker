@@ -19,7 +19,7 @@ NASA NeoWs supplies the encounter catalog; NASA/JPL Horizons supplies geometric 
 
 Zak directed the concept, feature requirements and visual iterations. This is an independent learning demonstration.
 
-The interface uses HTML, CSS and JavaScript; Three.js renders the viewer. A Cloudflare Worker retrieves and caches Horizons data through a same-origin endpoint. Node.js runs the build and 55 automated tests. No database or private NASA API key is required.
+The interface uses HTML, CSS and JavaScript; Three.js renders the viewer. A Cloudflare Worker retrieves and caches Horizons data through a same-origin endpoint. Node.js runs the build and 56 automated tests. No database or private NASA API key is required.
 
 ## Use
 
@@ -96,3 +96,5 @@ If OneDrive placeholders cause the CLI to report a symlink in Build Output, run 
 Framing is held steady while time is scrubbed: the reference scale covers the full loaded five-day encounter window and selected trajectory coverage, and the enlarged Earth radius uses the catalog’s closest approach reference. New data does not continuously reframe the view. A newly selected trajectory refits once its data arrives. **Fit field** explicitly recalculates the fit; **Reset view** restores the camera angle. Filters preserve this reference scale.
 
 The field prioritizes up to 60 encounters nearest the selected epoch, so later encounters enter as the five-day timeline advances. Table and CSV retain the full matching catalog. The public NASA demo key can be rate-limited; failed fetches show only the actual dated fallback coverage. An optional `NASA_API_KEY` Worker secret can provide a dedicated allowance without exposing a key in frontend source.
+
+The catalog endpoint returns only fields used by the explorer. NASA API links and unused provider metadata are removed before responses enter public caches, so upstream credential URLs are not passed to browsers. The personal NASA key is configured separately as a Cloudflare secret and is never included in repository files.
