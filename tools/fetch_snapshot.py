@@ -4,10 +4,10 @@ from datetime import datetime, timezone, timedelta, date
 from pathlib import Path
 import argparse
 p=argparse.ArgumentParser();p.add_argument('--start',default=datetime.now(timezone.utc).date().isoformat());a=p.parse_args()
-start=date.fromisoformat(a.start);end=start+timedelta(days=29)
-groups={str(start+timedelta(days=i)):[] for i in range(30)}
+start=date.fromisoformat(a.start);end=start+timedelta(days=4)
+groups={str(start+timedelta(days=i)):[] for i in range(5)}
 sources=[]
-for offset in range(0,30,7):
+for offset in range(0,5,7):
     first=start+timedelta(days=offset);last=min(end,first+timedelta(days=6))
     url=f'https://api.nasa.gov/neo/rest/v1/feed?start_date={first}&end_date={last}&api_key=DEMO_KEY'
     with urllib.request.urlopen(url,timeout=30) as r:batch=json.load(r)
