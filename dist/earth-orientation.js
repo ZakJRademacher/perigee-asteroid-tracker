@@ -1,4 +1,4 @@
-import {Observer,ObserverVector,GeoVector,Rotation_EQJ_ECL,Rotation_ECL_EQD,AstroTime,Vector,RotateVector,SiderealTime} from './vendor/astronomy.js';
+import {Observer,ObserverVector,HelioVector,Rotation_EQJ_ECL,Rotation_ECL_EQD,AstroTime,Vector,RotateVector,SiderealTime} from './vendor/astronomy.js';
 
 // Earth-fixed directions -> J2000 equatorial -> J2000 ecliptic -> renderer.
 // SphereGeometry UVs: Greenwich = local +X, north = +Y, 90 E = -Z.
@@ -14,7 +14,9 @@ export function earthOrientation(epoch){
  const prime=sceneDirection(ObserverVector(date,new Observer(0,0,0),false));
  const north=sceneDirection(ObserverVector(date,new Observer(90,0,0),false));
  const east=sceneDirection(ObserverVector(date,new Observer(0,90,0),false));
- return {epoch,prime,north,west:east.map(v=>-v),sun:sceneDirection(GeoVector('Sun',date,false)),siderealHours:SiderealTime(date)};
+ const earth=RotateVector(rotation,HelioVector('Earth',date)),auKm=149597870.7;
+ const sunPositionKm=[-earth.x*auKm,-earth.z*auKm,earth.y*auKm],distance=Math.hypot(...sunPositionKm);
+ return {epoch,prime,north,west:east.map(v=>-v),sun:sunPositionKm.map(v=>v/distance),sunPositionKm,siderealHours:SiderealTime(date)};
 }
 
 export function surfaceDirection(state,latitude,longitude){
