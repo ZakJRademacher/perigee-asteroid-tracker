@@ -1,24 +1,21 @@
-"""Refresh the attributed NASA fallback snapshot; no private API key required."""
-import json, urllib.request
-from datetime import datetime, timezone, timedelta, date
+"""Refresh the dated fallback through Perigee's credential-free public endpoint."""
+import argparse,json,urllib.request
+from datetime import datetime,timezone,timedelta,date
 from pathlib import Path
-import argparse
-p=argparse.ArgumentParser();p.add_argument('--start',default=datetime.now(timezone.utc).date().isoformat());a=p.parse_args()
-start=date.fromisoformat(a.start);end=start+timedelta(days=4)
-groups={str(start+timedelta(days=i)):[] for i in range(5)}
-sources=[]
-for offset in range(0,5,7):
-    first=start+timedelta(days=offset);last=min(end,first+timedelta(days=6))
-    url=f'https://api.nasa.gov/neo/rest/v1/feed?start_date={first}&end_date={last}&api_key=DEMO_KEY'
-    with urllib.request.urlopen(url,timeout=30) as r:batch=json.load(r)
-    assert isinstance(batch.get('near_earth_objects'),dict),'Unexpected feed schema'
-    for day,objects in batch['near_earth_objects'].items():
-        assert str(first)<=day<=str(last),'Unexpected batch date'
-        groups[day].extend(objects)
-    sources.append({'start':str(first),'end':str(last),'url':url})
-data={'element_count':sum(map(len,groups.values())),'near_earth_objects':groups}
-out={'source':'NASA NeoWs','source_url':'https://api.nasa.gov/','retrieved_at':datetime.now(timezone.utc).isoformat(),'start':str(start),'end':str(end),'requests':sources,'feed':data}
-# NASA responses include DEMO_KEY links; the public demo key is not a credential.
+
+p=argparse.ArgumentParser(description=__doc__)
+p.add_argument('--start',default=datetime.now(timezone.utc).date().isoformat())
+p.add_argument('--base-url',default='https://perigee.zakjrademacher.workers.dev')
+a=p.parse_args();start=date.fromisoformat(a.start)
+url=a.base_url.rstrip('/')+'/api/catalog?start='+str(start)
+req=urllib.request.Request(url,headers={'User-Agent':'Perigee snapshot maintenance','Accept':'application/json'})
+with urllib.request.urlopen(req,timeout=65) as r:d=json.load(r)
+assert d['start']==str(start) and d['end']==str(start+timedelta(days=29)),'Incomplete timeline'
+assert d['candidateStart']==str(start-timedelta(days=7)) and d['candidateEnd']==str(start+timedelta(days=36)),'Incomplete candidate coverage'
+assert len(d['feed']['near_earth_objects'])==44,'Incomplete daily groups'
+out={'source':'NASA NeoWs','source_url':'https://api.nasa.gov/','retrieved_at':d['retrievedAt'],'start':d['start'],'end':d['end'],'candidateStart':d['candidateStart'],'candidateEnd':d['candidateEnd'],'feed':d['feed']}
+text=json.dumps(out,ensure_ascii=False,separators=(',',':'))
+assert 'api_key=' not in text,'Provider credential URLs must not enter the saved snapshot'
 target=Path(__file__).resolve().parents[1]/'dist/data/snapshot.json'
-target.write_text(json.dumps(out,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-print(f'Saved NASA snapshot: {start} to {end}; {data.get("element_count")} objects')
+temporary=target.with_suffix('.json.tmp');temporary.write_text(text,encoding='utf-8');temporary.replace(target)
+print(f"Saved dated NASA snapshot: {d['start']} through {d['end']}; candidates {d['candidateStart']} through {d['candidateEnd']}")
