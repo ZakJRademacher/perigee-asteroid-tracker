@@ -1,0 +1,19 @@
+{
+  "assets": {
+    "2010al30-radar.gif": {
+      "url": "https://echo.jpl.nasa.gov/asteroids/2010AL30/2010al30.18frame.collage.gif",
+      "source": "https://echo.jpl.nasa.gov/asteroids/2010AL30/2010al30.html",
+      "credit": "NASA/JPL Goldstone Solar System Radar",
+      "sha256": "b8f251c4cc8c089111e0519303bebe39bf68ec0f7aa9a0e61e60322f469f5d63",
+      "modifications": "None"
+    },
+    "bennu-particles.jpg": {
+      "url": "https://d2pn8kiwq2w21t.cloudfront.net/original_images/jpegPIA23554.jpg",
+      "source": "https://www.jpl.nasa.gov/images/pia23554-asteroid-bennu-particles/",
+      "credit": "NASA/Goddard/University of Arizona/Lockheed Martin",
+      "sha256": "fac9e903fb6ed4d325f08ef7d26457e5180ae796f64305c4f9f95f83cdcd2556",
+      "modifications": "None"
+    }
+  },
+  "earth-map.svg": "Original equirectangular illustration, not a NASA photograph."
+}
