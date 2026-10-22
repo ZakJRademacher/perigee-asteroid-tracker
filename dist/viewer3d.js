@@ -16,7 +16,7 @@ export class EncounterViewer {
   this.scene.add(new THREE.AmbientLight(0x778eaa,1.1));const sun=new THREE.DirectionalLight(0xe5f4ff,3.8);sun.position.set(-7,5,6);this.scene.add(sun);const fill=new THREE.DirectionalLight(0x4a789d,.6);fill.position.set(5,-2,-5);this.scene.add(fill);
   this.globe=new EarthGlobe(this.scene,host,()=>this.draw());this.earth=this.globe.surface;this.globe.setEpoch(Date.now());
   const makeRing=(radius,opacity)=>{const points=[];for(let i=0;i<=160;i++){const a=i/160*Math.PI*2;points.push(new THREE.Vector3(Math.cos(a)*radius,0,Math.sin(a)*radius));}const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:0x72968d,transparent:true,opacity}));this.scene.add(line);};
-  for(const r of [3,5,7])makeRing(r,.10);
+  for(const r of [2.6,5.2,7.8])makeRing(r,r===7.8?.24:.10);
   const crossPoints=[new THREE.Vector3(-9,0,0),new THREE.Vector3(9,0,0),new THREE.Vector3(0,0,-9),new THREE.Vector3(0,0,9)];this.scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(crossPoints),new THREE.LineBasicMaterial({color:0x506c78,transparent:true,opacity:.15})));
   let seed=942;const rand=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};const stars=[];for(let i=0;i<900;i++){const az=rand()*Math.PI*2,y=rand()*2-1,r=38+rand()*15,s=Math.sqrt(1-y*y);stars.push(r*s*Math.cos(az),r*y,r*s*Math.sin(az));}const starGeo=new THREE.BufferGeometry();starGeo.setAttribute('position',new THREE.Float32BufferAttribute(stars,3));this.stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xaac3d4,size:.065,transparent:true,opacity:.7,sizeAttenuation:true}));this.scene.add(this.stars);
   this.group=new THREE.Group();this.scene.add(this.group);this.trajectory=null;this.raycaster=new THREE.Raycaster();this.pointer=new THREE.Vector2();this.overlay=document.createElement('div');this.overlay.className='viewer3d-markers';host.append(this.overlay);
@@ -28,23 +28,25 @@ export class EncounterViewer {
  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.draw();}
  update(rows,selected,maxLd,path=[],epoch=Date.now(),earthRadius=EARTH_RADIUS){
   this.globe.setEpoch(epoch);const frame=equatorialFrame(epoch);
-  const shown=rows.filter(row=>row.scenePosition).slice(0,60);
+  const shown=rows.filter(row=>row.scenePosition);
   this.earthRadius=earthRadius;this.earth.scale.setScalar(earthRadius/EARTH_RADIUS);this.globe.atmosphere.scale.setScalar(earthRadius/EARTH_RADIUS);this.controls.minDistance=Math.max(1e-7,earthRadius*3.8);if(this.camera.position.length()<this.controls.minDistance)this.camera.position.setLength(this.controls.minDistance);this.host.dataset.earthRadius=String(earthRadius);
-  const reuse=this.selected===selected&&shown.length===this.items.length&&shown.every((row,i)=>row.key===this.items[i].row.key&&markerSize(row).known===markerSize(this.items[i].row).known);
-  this.selected=selected;
-  if(!reuse){
-   this.group.clear();for(const item of this.items){item.mesh.geometry.dispose();item.mesh.material.dispose();}this.items=[];this.overlay.replaceChildren();
-   for(const row of shown){
-    const chosen=row.key===selected;
-    const mesh=new THREE.Mesh(markerSize(row).known?new THREE.IcosahedronGeometry(1,1):new THREE.TorusGeometry(.9,.1,6,32),new THREE.MeshStandardMaterial({color:row.pha?0xe7b979:0xb9eccd,emissive:row.pha?0x8c5c23:0x397c60,emissiveIntensity:chosen?2:.8,roughness:.7,flatShading:true,depthTest:true}));
+  const previous=new Map(this.items.map(item=>[item.row.key,item]));this.selected=selected;
+  this.items=shown.map(row=>{
+   let item=previous.get(row.key);previous.delete(row.key);
+   if(item&&markerSize(row).known!==markerSize(item.row).known){this.group.remove(item.mesh);item.mesh.geometry.dispose();item.mesh.material.dispose();item.button.remove();item=null;}
+   if(!item){
+    const mesh=new THREE.Mesh(markerSize(row).known?new THREE.IcosahedronGeometry(1,1):new THREE.TorusGeometry(.9,.1,6,32),new THREE.MeshStandardMaterial({color:row.pha?0xe7b979:0xb9eccd,emissive:row.pha?0x8c5c23:0x397c60,emissiveIntensity:.8,roughness:.7,flatShading:true,depthTest:true}));
     mesh.userData.key=row.key;this.group.add(mesh);
-    const button=document.createElement('button');button.className='viewer3d-point'+(chosen?' selected':'')+(row.pha?' pha':'');button.setAttribute('aria-pressed',String(chosen));button.addEventListener('click',()=>this.onSelect(row.key));
-    const core=document.createElement('span');core.className='point-core';button.append(core);const label=document.createElement('span');label.className='point-label';button.append(label);this.overlay.append(button);this.items.push({mesh,button,row,label});
+    const button=document.createElement('button');button.className='viewer3d-point';button.addEventListener('click',()=>this.onSelect(row.key));
+    const core=document.createElement('span');core.className='point-core';button.append(core);const label=document.createElement('span');label.className='point-label';button.append(label);this.overlay.append(button);item={mesh,button,row,label};
    }
-  }
+   const chosen=row.key===selected;item.button.classList.toggle('selected',chosen);item.button.classList.toggle('pha',row.pha);item.button.setAttribute('aria-pressed',String(chosen));item.mesh.material.emissiveIntensity=chosen?2:.8;
+   return item;
+  });
+  for(const item of previous.values()){this.group.remove(item.mesh);item.mesh.geometry.dispose();item.mesh.material.dispose();item.button.remove();}
   this.items.forEach((item,i)=>{const row=shown[i],p=row.scenePosition;item.row=row;const size=markerSize(row);item.markerPixels=size.pixels;item.mesh.visible=true;item.button.style.setProperty('--marker-px',size.pixels+'px');item.button.classList.toggle('size-unknown',!size.known);item.button.title=size.label;item.mesh.position.set(...frameVector(frame,[p.x,p.y,p.z]));const distance=(row.positionKm/384400).toFixed(2);item.button.setAttribute('aria-label',row.name+', Earth distance '+distance+' lunar distances, '+size.label);item.label.textContent=row.name+' · '+distance+' LD at epoch · '+size.label;});
   if(this.trajectory){this.scene.remove(this.trajectory);this.trajectory.geometry.dispose();this.trajectory.material.dispose();this.trajectory=null;}
-  if(selected&&path.length>1){this.trajectory=new THREE.Line(new THREE.BufferGeometry().setFromPoints(path.map(p=>new THREE.Vector3(...frameVector(frame,[p.x,p.y,p.z])))),new THREE.LineBasicMaterial({color:0xbde9ce,transparent:true,opacity:.75,depthTest:true}));this.trajectory.name='selected-predicted-path';this.scene.add(this.trajectory);}
+  if(selected&&path.length>1){this.trajectory=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(path.map(p=>new THREE.Vector3(...frameVector(frame,[p.x,p.y,p.z])))),new THREE.LineBasicMaterial({color:0xbde9ce,transparent:true,opacity:.75,depthTest:true}));this.trajectory.name='selected-predicted-path';this.scene.add(this.trajectory);}
   this.host.dataset.trajectoryPoints=String(selected?path.length:0);this.draw();
  }
  draw(){if(!this.active)return;const near=Math.min(.1,Math.max((this.earthRadius??EARTH_RADIUS)*.03,this.camera.position.length()*.001));if(this.camera.near!==near){this.camera.near=near;this.camera.updateProjectionMatrix();}this.camera.updateMatrixWorld();const w=this.host.clientWidth,h=this.host.clientHeight,cam=this.camera.position;
@@ -56,5 +58,5 @@ export class EncounterViewer {
  reset(){this.controls.target.set(0,0,0);this.camera.position.copy(this.home);this.controls.update();this.draw();}
  setActive(active){this.active=active;if(!active){cancelAnimationFrame(this.frame);this.frame=0;}else{this.resize();this.start();}}
  setMotion(motion){this.motion=motion;if(!motion){cancelAnimationFrame(this.frame);this.frame=0;this.draw();}else this.start();}
- start(){if(this.frame||!this.active||!this.motion||document.hidden)return;const tick=now=>{this.frame=0;if(!this.active||!this.motion||document.hidden)return;this.stars.material.opacity=.67+Math.sin(now*.00015)*.035;this.draw();this.frame=requestAnimationFrame(tick);};this.frame=requestAnimationFrame(tick);}
+ start(){if(this.frame||!this.active||!this.motion||document.hidden)return;const tick=now=>{this.frame=0;if(!this.active||!this.motion||document.hidden)return;if(now-(this.lastStarDraw??0)>=50){this.lastStarDraw=now;this.stars.material.opacity=.67+Math.sin(now*.00015)*.035;this.renderer.render(this.scene,this.camera);}this.frame=requestAnimationFrame(tick);};this.frame=requestAnimationFrame(tick);}
 }

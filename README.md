@@ -8,7 +8,7 @@ An interactive learning project by Zak Rademacher that turns NASA/JPL data into 
 
 ## What you can explore
 
-- Five-day NASA encounter windows with search, numerical filters, daily counts and CSV export.
+- Thirty-day NASA encounter windows with search, numerical filters, daily counts and CSV export.
 - Earth-relative 3D positions at one visible UTC time, with a predicted 30-day path for the selected asteroid.
 - Estimated sizes, speeds, closest-approach distances and PHA classifications, with their limitations explained.
 - Reviewed historical radar/spacecraft imagery and separately labeled NASA archive search candidates.
@@ -19,11 +19,11 @@ NASA NeoWs supplies the encounter catalog; NASA/JPL Horizons supplies geometric 
 
 Zak directed the concept, feature requirements and visual iterations. This is an independent learning demonstration.
 
-The interface uses HTML, CSS and JavaScript; Three.js renders the viewer. A Cloudflare Worker retrieves and caches Horizons data through a same-origin endpoint. Node.js runs the build and 56 automated tests. No database or private NASA API key is required.
+The interface uses HTML, CSS and JavaScript; Three.js renders the viewer. A Cloudflare Worker retrieves and caches Horizons data through a same-origin endpoint. Node.js runs the build and 63 automated tests. No database or private NASA API key is required.
 
 ## Use
 
-[Open Perigee](https://perigee.zakjrademacher.workers.dev). The tracker is public. Choose a five-day encounter window. The 3D viewer loads up to 60 objects' JPL states serially and shows progress. Every positioned dot uses the same UTC epoch; unavailable states are omitted. Rotate, zoom or select a dot/catalog row. Only the selected object's next 30 days of Earth-relative path appear. Clear selection removes the path. Use the position time/slider or Now to change the epoch. Live clock advances the shared UTC epoch when the current time lies in the loaded window. Editing the time or slider pauses it; Now resumes live time. Historical and future windows remain fixed.
+[Open Perigee](https://perigee.zakjrademacher.workers.dev). The tracker is public. Choose a 30-day encounter window. The 3D viewer queues every unique candidate matching the filters for JPL states, loading serially with visible progress. It shows only positioned objects within the chosen Earth-centered viewing radius. Every positioned dot uses the same UTC epoch; unavailable states are omitted. Rotate, zoom or select a dot/catalog row. Only the selected object's next 30 days of Earth-relative path appear. Clear selection removes the path. Use the position time/slider or Now to change the epoch. Live clock advances the shared UTC epoch when the current time lies in the loaded window. Editing the time or slider pauses it; Now resumes live time. Historical and future windows remain fixed.
 
 The default 3D view preserves actual JPL directions and distance ratios with one **linear** scale. Earth and marker sizes are enlarged for visibility; Earth uses historical NASA composites, with sidereal orientation and date-based sunlight at the shared UTC epoch. Earth orientation is an educational approximation, without measured Earth-orientation corrections. Circular grid lines are distance guides. The separate **2D schematic** retains illustrative bearings and log closest-approach distances. The source/frame and epoch are visible, so these modes cannot be mistaken for one another.
 
@@ -31,8 +31,8 @@ Filters refer to close-approach dates/distances and estimated size, not current 
 
 ## Data and accuracy
 
-- [NASA NeoWs](https://api.nasa.gov/): five UTC calendar days in one request, a public demo key or optional server-side NASA_API_KEY secret, one-hour shared/browser caches and explicit refresh. On failure, a dated NASA snapshot is labeled and its actual window adopted.
-- [NASA/JPL Horizons](https://ssd-api.jpl.nasa.gov/doc/horizons.html): numeric SPK-ID lookup, Earth body center `500@399`, geometric vectors (`VEC_CORR=NONE`), ICRF/J2000 ecliptic orientation, km and km/s, UT/UTC. Sixty days of hourly states support positions throughout the five-day encounter window and a 30-day future path from any epoch in it.
+- [NASA NeoWs](https://api.nasa.gov/): a 30-day timeline and seven-day candidate buffers on either side, in seven serial requests, a public demo key or optional server-side NASA_API_KEY secret, 15-minute catalog caches with a personal key (one hour with the demo key) and explicit refresh. On failure, a dated NASA snapshot is labeled and its actual window adopted.
+- [NASA/JPL Horizons](https://ssd-api.jpl.nasa.gov/doc/horizons.html): numeric SPK-ID lookup, Earth body center `500@399`, geometric vectors (`VEC_CORR=NONE`), ICRF/J2000 ecliptic orientation, km and km/s, UT/UTC. Sixty days of hourly states support positions throughout the 30-day encounter window and a 30-day future path from any epoch in it.
 - Positions between JPL samples use cubic Hermite interpolation with the supplied velocities. They are computed predictions, not direct live measurements. No universal interpolation error bound or uncertainty envelope is claimed. Very close flybys may need finer sampling for precision work. Source states are never extrapolated beyond coverage.
 - The drawn path is a finite Earth-relative trajectory, not a closed orbit around Earth or a complete heliocentric orbit. PHA classification is not an impact probability.
 - Both browser and server serialize their JPL requests, deduplicate pending lookups, cache successful data for an hour and handle service backoff. The Worker sends an application-specific User-Agent with the public project owner's GitHub contact. JPL is called server-side rather than directly from the browser. An API version/frame/coverage mismatch fails closed.
@@ -45,7 +45,7 @@ This version uses a small ES-module Worker to serve the app and its same-origin 
 ```powershell
 node tools/build-worker.mjs
 node tools/validate-worker.mjs
-node --test tests/model.test.mjs tests/viewer-media.test.mjs tests/ephemeris.test.mjs tests/worker.test.mjs tests/earth.test.mjs tests/catalog.test.mjs
+node --test tests/model.test.mjs tests/viewer-media.test.mjs tests/ephemeris.test.mjs tests/worker.test.mjs tests/earth.test.mjs tests/catalog.test.mjs tests/field.test.mjs
 node tools/serve-worker.mjs
 ```
 
@@ -93,8 +93,12 @@ The default 3D view uses the true equatorial frame of the shared epoch, with Ear
 
 If OneDrive placeholders cause the CLI to report a symlink in Build Output, run `python tools/stage_cloudflare.py --deploy` after building and testing. It copies only generated deployment files as regular bytes into a fresh local temporary folder, verifies their hashes, performs a dry-run and publishes with the project’s pinned CLI. Source and deployment records remain in OneDrive.
 
-Framing is held steady while time is scrubbed: the reference scale covers the full loaded five-day encounter window and selected trajectory coverage, and the enlarged Earth radius uses the catalog’s closest approach reference. New data does not continuously reframe the view. A newly selected trajectory refits once its data arrives. **Fit field** explicitly recalculates the fit; **Reset view** restores the camera angle. Filters preserve this reference scale.
+The viewing radius fixes the distance scale throughout scrubbing, loading and selection. Default: 100 LD; choices: 25, 50 and 100 LD. Earth's enlarged radius is fixed from the candidate catalog for that viewing radius. **Fit field** and **Reset view** restore the camera. The selected trajectory is clipped into independent line segments at the sphere boundary.
 
-The field prioritizes up to 60 encounters nearest the selected epoch, so later encounters enter as the five-day timeline advances. Table and CSV retain the full matching catalog. The public NASA demo key can be rate-limited; failed fetches show only the actual dated fallback coverage. An optional `NASA_API_KEY` Worker secret can provide a dedicated allowance without exposing a key in frontend source.
+The 3D field uses all unique buffered candidates matching the filters, with no 60-marker cap. Table, metrics and CSV retain only close approaches within the visible timeline. The private NASA key is a separate Cloudflare secret; caches reuse successful source responses for an hour. A saved fallback adopts its actual dated coverage. See [viewing-field behavior](docs/VIEWING_FIELD.md).
 
 The catalog endpoint returns only fields used by the explorer. NASA API links and unused provider metadata are removed before responses enter public caches, so upstream credential URLs are not passed to browsers. The personal NASA key is configured separately as a Cloudflare secret and is never included in repository files.
+
+The **View settings → Click again to close details** preference is enabled by default and saved in browser storage when available. Repeating a selection clears the details and path while keeping the panel space fixed. Disabling the preference retains the selection; the explicit Close and Clear selection controls remain available.
+
+While Live clock is enabled and the page is visible, the app checks once per minute whether the catalog refresh interval has elapsed. Background refresh preserves the selected object and scrub time for the same window. Likely nearby candidates are prioritized for downloads; the priority score never substitutes for JPL coordinates. IndexedDB stores successful vectors beyond localStorage's small string quota, with a one-hour source-timestamp expiry and graceful fallback if storage is unavailable. Existing marker meshes are reused, and decorative star redraws are limited to 20 frames per second without repeatedly projecting DOM marker labels.

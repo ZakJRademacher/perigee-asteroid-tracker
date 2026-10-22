@@ -1,12 +1,15 @@
 import {addDays,validDate,normalizeFeed} from './model.js';
-export const CATALOG_DAYS=5;
+export const CATALOG_DAYS=30;
+export const CANDIDATE_BUFFER_DAYS=7;
+export function catalogCoverage(start){return {start:addDays(start,-CANDIDATE_BUFFER_DAYS),end:addDays(start,CATALOG_DAYS+CANDIDATE_BUFFER_DAYS-1)};}
 export function catalogWindows(start){
  if(!validDate(start))throw new RangeError('A valid catalog start date is required');
- return [{start,end:addDays(start,CATALOG_DAYS-1)}];
+ const coverage=catalogCoverage(start),days=CATALOG_DAYS+2*CANDIDATE_BUFFER_DAYS;
+ return Array.from({length:Math.ceil(days/7)},(_,i)=>({start:addDays(coverage.start,i*7),end:addDays(coverage.start,Math.min(i*7+6,days-1))}));
 }
 export function mergeCatalog(start,feeds){
- const windows=catalogWindows(start);if(feeds.length!==windows.length)throw Error('Incomplete five-day NASA catalog');
- const groups=Object.fromEntries(Array.from({length:CATALOG_DAYS},(_,i)=>[addDays(start,i),[]]));
+ const windows=catalogWindows(start);if(feeds.length!==windows.length)throw Error('Incomplete buffered NASA catalog');
+ const coverage=catalogCoverage(start),groups=Object.fromEntries(Array.from({length:CATALOG_DAYS+2*CANDIDATE_BUFFER_DAYS},(_,i)=>[addDays(coverage.start,i),[]]));
  feeds.forEach((feed,index)=>{
   normalizeFeed(feed);
   for(const [date,objects] of Object.entries(feed.near_earth_objects)){
@@ -33,7 +36,7 @@ export function fieldRows(records,epoch,selected,limit=60){
  return result;
 }
 
-export function encounterRows(feed,start){
- const data=normalizeFeed(feed),first=Date.parse(start+'T00:00:00Z'),end=first+CATALOG_DAYS*86400000;
+export function encounterRows(feed,start,days=CATALOG_DAYS){
+ const data=normalizeFeed(feed),first=Date.parse(start+'T00:00:00Z'),end=first+days*86400000;
  return {...data,rows:data.rows.filter(r=>r.epoch>=first&&r.epoch<end)};
 }
