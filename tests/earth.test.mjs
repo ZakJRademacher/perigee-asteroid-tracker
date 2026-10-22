@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {earthOrientation,surfaceDirection,equatorialFrame,frameVector} from '../dist/earth-orientation.js';
+import {earthOrientation,moonState,moonOrbitGuide,earthOrbitGuide,surfaceDirection,equatorialFrame,frameVector} from '../dist/earth-orientation.js';
 import {sphereOccludes} from '../dist/occlusion.js';
 import {markerSize} from '../dist/marker-size.js';
 const dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0),degrees=r=>r*180/Math.PI;
@@ -61,6 +61,40 @@ test('geometric Sun position retains real distance, shared lighting direction an
  const framed=frameVector(equatorialFrame(epoch),state.sunPositionKm);
  assert.ok(Math.abs(Math.hypot(...framed)-distance)<1e-6);
 });
+
+test('Moon position agrees with a JPL reference and its surface basis keeps the near side facing Earth',()=>{
+ const epoch=Date.parse('2026-10-22T00:00:00Z'),state=moonState(epoch),reference=[354821.6876948141,4815.542842848576,160634.0808988809];
+ assert.ok(Math.hypot(...state.positionKm.map((v,k)=>v-reference[k]))<50);
+ for(let day=0;day<30;day+=3){
+  const s=moonState(epoch+day*86400000),distance=Math.hypot(...s.positionKm),earthDirection=s.positionKm.map(v=>-v/distance);
+  assert.ok(distance>350000&&distance<410000);
+  assert.ok(dot(s.prime,earthDirection)>.97,'prime meridian should remain near the Earth-facing hemisphere');
+  for(const v of [s.prime,s.north,s.west])assert.ok(Math.abs(Math.hypot(...v)-1)<1e-12);
+  assert.ok(Math.abs(dot(s.prime,s.north))<1e-12);
+  const [a,b,c]=s.prime,[x,y,z]=s.north,cross=[b*z-c*y,c*x-a*z,a*y-b*x];assert.ok(dot(cross,s.west)>.999999999);
+ }
+ const earthRadius=6371,moonRadius=1737.4;assert.ok(Math.abs(moonRadius/earthRadius-.2727)<.0001);
+ for(const bad of [NaN,Infinity,Date.parse('1900-01-01'),Date.parse('2100-01-01')])assert.throws(()=>moonState(bad),RangeError);
+});
+
+test('closed lunar guide passes through its source state with a smooth seam and physical orbital dimensions',()=>{
+ const epoch=Date.parse('2026-10-22T13:00:00Z'),guide=moonOrbitGuide(epoch),state=moonState(guide.epoch);
+ assert.equal(guide.points.length,257);assert.deepEqual(guide.points[0],guide.points.at(-1));
+ assert.ok(Math.hypot(...guide.points[0].map((v,k)=>v-state.positionKm[k]))<1e-6);
+ assert.ok(guide.eccentricity>.01&&guide.eccentricity<.12);assert.ok(guide.semiMajorKm>350000&&guide.semiMajorKm<420000);
+ const lengths=guide.points.slice(1).map((p,i)=>Math.hypot(...p.map((v,k)=>v-guide.points[i][k])));assert.ok(Math.max(...lengths)<15000);assert.ok(Math.min(...lengths)>5000);
+ const first=guide.points[1].map((v,k)=>v-guide.points[0][k]),last=guide.points.at(-1).map((v,k)=>v-guide.points.at(-2)[k]);assert.ok(dot(first,last)/(Math.hypot(...first)*Math.hypot(...last))>.99);
+ for(const date of ['1962-01-01T00:00:00Z','2099-12-31T23:30:00Z'])assert.equal(moonOrbitGuide(Date.parse(date)).points.length,257);
+});
+
+test('Earth orbit is closed about the Sun and passes through Earth after geocentric translation',()=>{
+ const epoch=Date.parse('2026-10-22T00:00:00Z'),guide=earthOrbitGuide(epoch),sun=earthOrientation(epoch).sunPositionKm;
+ assert.equal(guide.points.length,257);assert.deepEqual(guide.points[0],guide.points.at(-1));
+ assert.ok(guide.eccentricity>.01&&guide.eccentricity<.03);assert.ok(guide.semiMajorKm>148e6&&guide.semiMajorKm<151e6);
+ assert.ok(Math.hypot(...guide.points[0].map((v,k)=>v+sun[k]))<1e-6,'Earth must remain at the model origin');
+ for(const p of guide.points)assert.ok(Math.hypot(...p)>146e6&&Math.hypot(...p)<154e6);
+});
+
 test('invalid or unsupported Earth epochs fail without inventing an orientation',()=>{
  for(const epoch of [NaN,Infinity,Date.parse('1900-01-01'),Date.parse('2100-01-01')])assert.throws(()=>earthOrientation(epoch),RangeError);
 });
@@ -69,7 +103,7 @@ test('NASA texture and astronomy runtime hashes and retained license match prove
  for(const [file,hash] of Object.entries(vendor.files_sha256))assert.equal(createHash('sha256').update(readFileSync(new URL('../dist/vendor/'+file,import.meta.url))).digest('hex'),hash);
  assert.match(readFileSync(new URL('../dist/vendor/astronomy.js',import.meta.url),'utf8'),/MIT License/);
  const assets=JSON.parse(readFileSync(new URL('../dist/assets/provenance.json',import.meta.url)));
- for(const file of ['earth-day.jpg','earth-clouds.jpg','earth-night.jpg']){
+ for(const file of ['earth-day.jpg','earth-clouds.jpg','earth-night.jpg','moon-color.jpg']){
   const data=assets.assets[file];assert.ok(data.date&&data.credit&&data.source);assert.equal(data.modifications.startsWith('None.'),true);
   assert.equal(createHash('sha256').update(readFileSync(new URL('../dist/assets/'+file,import.meta.url))).digest('hex'),data.sha256);
  }

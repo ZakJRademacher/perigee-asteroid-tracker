@@ -37,6 +37,14 @@
       "date": "April and October 2012",
       "sha256": "373e5a08c9f378a2ce6320214a613148e4b1e3946b3f39a516c9093b76cb7124",
       "modifications": "None. Displayed on a spherical globe with computed lighting; historical imagery, not live weather."
+    },
+    "moon-color.jpg": {
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_1k.jpg",
+      "source": "https://svs.gsfc.nasa.gov/4720/",
+      "credit": "NASA's Scientific Visualization Studio; Ernie Wright; LRO/LROC and LOLA teams",
+      "date": "Historical LRO composite, 2019 CGI Moon Kit",
+      "sha256": "b246064f217f8d479df78c49c7c8595a8f5fbda008a72fd539978d2e121e0109",
+      "modifications": "None. Original 1024x512 JPEG, mapped onto a sphere with modeled lighting. Historical composite, not a live photograph."
     }
   },
   "earth-map.svg": "Original equirectangular illustration, not a NASA photograph."
