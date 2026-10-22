@@ -49,7 +49,7 @@ node --test tests/model.test.mjs tests/viewer-media.test.mjs tests/ephemeris.tes
 node tools/serve-worker.mjs
 ```
 
-Open http://127.0.0.1:8790/. No dependency installation or private NASA key is required. The deterministic build embeds the existing frontend files into `dist/server/index.js` and copies the hosting manifest to `dist/.openai/hosting.json`. Existing source remains under `dist/`; generated server output is ignored in Git. This adapts the Sites Worker ESM starter to a portable Node build without deleting the source assets. The original static deployment and prior commits are retained.
+Open http://127.0.0.1:8790/. No dependency installation or private NASA key is required for this local preview. The deterministic build embeds the frontend files into `dist/server/index.js`. Frontend source remains under `dist/`; generated server output is ignored in Git.
 
 ## Deploy to Cloudflare
 
@@ -77,6 +77,6 @@ An earlier Sites deployment is retained separately. Future changes require publi
 - `tests/fixtures/horizons-2010al30.json`: unmodified real JPL response used for parser and numerical checks.
 - `dist/data/horizons-example.json`: parsed, dated example; reused only while it meets the same one-hour freshness check as any response.
 - `tools/`: deterministic build, local Worker preview, validator, explicit NASA snapshot refresh and reproducible vendor download.
-- `docs/METHODOLOGY.md`, `evidence/`, `deliverables/`: method, QA, screenshots and publication archives.
+- `docs/METHODOLOGY.md`, `docs/images/`: data methods and a screenshot of the published explorer.
 
-This is an independent educational project, not a NASA product. Files are saved in Zak's local OneDrive project library; cloud sync was not independently verified.
+This is an independent educational project, not a NASA product.
