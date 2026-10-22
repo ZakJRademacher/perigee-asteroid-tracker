@@ -1,12 +1,12 @@
 import {addDays,validDate,normalizeFeed} from './model.js';
-export const CATALOG_DAYS=30;
+export const CATALOG_DAYS=5;
 export function catalogWindows(start){
  if(!validDate(start))throw new RangeError('A valid catalog start date is required');
- return Array.from({length:5},(_,i)=>({start:addDays(start,i*7),end:addDays(start,Math.min(i*7+6,29))}));
+ return [{start,end:addDays(start,CATALOG_DAYS-1)}];
 }
 export function mergeCatalog(start,feeds){
- const windows=catalogWindows(start);if(feeds.length!==windows.length)throw Error('Incomplete 30-day NASA catalog');
- const groups=Object.fromEntries(Array.from({length:30},(_,i)=>[addDays(start,i),[]]));
+ const windows=catalogWindows(start);if(feeds.length!==windows.length)throw Error('Incomplete five-day NASA catalog');
+ const groups=Object.fromEntries(Array.from({length:CATALOG_DAYS},(_,i)=>[addDays(start,i),[]]));
  feeds.forEach((feed,index)=>{
   normalizeFeed(feed);
   for(const [date,objects] of Object.entries(feed.near_earth_objects)){
@@ -21,7 +21,7 @@ export async function fetchCatalog(start,{fetcher=fetch,signal,onProgress=()=>{}
  for(const [index,window] of windows.entries()){
   onProgress(index+1,windows.length);
   const response=await fetcher(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${window.start}&end_date=${window.end}&api_key=${encodeURIComponent(apiKey)}`,{signal});
-  if(!response.ok)throw Error(response.status===429?'NASA demo rate limit reached.':'NASA returned HTTP '+response.status+'.');
+  if(!response.ok)throw Error(response.status===429?'NASA request rate limit reached.':'NASA returned HTTP '+response.status+'.');
   feeds.push(await response.json());
  }
  return mergeCatalog(start,feeds);
@@ -31,4 +31,9 @@ export function fieldRows(records,epoch,selected,limit=60){
  const result=sorted.slice(0,limit),chosen=records.find(r=>r.key===selected);
  if(chosen&&!result.includes(chosen)){result.pop();result.push(chosen);}
  return result;
+}
+
+export function encounterRows(feed,start){
+ const data=normalizeFeed(feed),first=Date.parse(start+'T00:00:00Z'),end=first+CATALOG_DAYS*86400000;
+ return {...data,rows:data.rows.filter(r=>r.epoch>=first&&r.epoch<end)};
 }
