@@ -4,7 +4,7 @@ An interactive learning project by Zak Rademacher that turns NASA/JPL data into 
 
 **[Open the live explorer](https://perigee.zakjrademacher.workers.dev/)** · [Data methodology](docs/METHODOLOGY.md) · [Run locally](#run-and-verify)
 
-![Perigee's 3D viewer with a selected asteroid, timestamped JPL coordinates and encounter details](docs/images/perigee-viewer.png)
+![Current Earth-centered viewer with blue lunar orbit guide, amber Earth-orbit guide and selected Moon profile](docs/images/perigee-viewer.png)
 
 ## What you can explore
 
