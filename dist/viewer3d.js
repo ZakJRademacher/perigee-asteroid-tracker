@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {EarthGlobe} from './earth-globe.js';
 import {markerSize} from './marker-size.js';
-import {equatorialFrame,frameVector} from './earth-orientation.js';
+import {earthOrientation,equatorialFrame,frameVector} from './earth-orientation.js';
 import {sphereOccludes,EARTH_RADIUS} from './occlusion.js';
 
 export class EncounterViewer {
@@ -15,6 +15,8 @@ export class EncounterViewer {
   this.controls=new OrbitControls(this.camera,this.canvas);this.controls.enablePan=false;this.controls.minDistance=2.4;this.controls.maxDistance=32;this.controls.minPolarAngle=.15;this.controls.maxPolarAngle=Math.PI-.15;this.controls.zoomSpeed=.7;this.controls.rotateSpeed=.6;this.controls.addEventListener('change',()=>this.draw());
   this.scene.add(new THREE.AmbientLight(0x778eaa,1.1));const sun=new THREE.DirectionalLight(0xe5f4ff,3.8);sun.position.set(-7,5,6);this.scene.add(sun);const fill=new THREE.DirectionalLight(0x4a789d,.6);fill.position.set(5,-2,-5);this.scene.add(fill);
   this.globe=new EarthGlobe(this.scene,host,()=>this.draw());this.earth=this.globe.surface;this.globe.setEpoch(Date.now());
+  this.sunReference=new THREE.Mesh(new THREE.SphereGeometry(.15,24,16),new THREE.MeshBasicMaterial({color:0xffce70,toneMapped:false}));this.sunReference.name='sun-direction-reference';this.scene.add(this.sunReference);
+  this.sunLabel=document.createElement('span');this.sunLabel.className='sun-reference-label';this.sunLabel.textContent='Sun direction · off scale';this.sunLabel.title='Direction at the displayed UTC epoch. Sun distance and size are not to scale; the Sun is outside the asteroid viewing sphere.';host.append(this.sunLabel);
   const makeRing=(radius,opacity)=>{const points=[];for(let i=0;i<=160;i++){const a=i/160*Math.PI*2;points.push(new THREE.Vector3(Math.cos(a)*radius,0,Math.sin(a)*radius));}const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:0x72968d,transparent:true,opacity}));this.scene.add(line);};
   for(const r of [2.6,5.2,7.8])makeRing(r,r===7.8?.24:.10);
   const crossPoints=[new THREE.Vector3(-9,0,0),new THREE.Vector3(9,0,0),new THREE.Vector3(0,0,-9),new THREE.Vector3(0,0,9)];this.scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(crossPoints),new THREE.LineBasicMaterial({color:0x506c78,transparent:true,opacity:.15})));
@@ -28,6 +30,7 @@ export class EncounterViewer {
  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.draw();}
  update(rows,selected,maxLd,path=[],epoch=Date.now(),earthRadius=EARTH_RADIUS){
   this.globe.setEpoch(epoch);const frame=equatorialFrame(epoch);
+  try{const direction=frameVector(frame,earthOrientation(epoch).sun);this.sunReference.position.set(...direction).multiplyScalar(8.8);this.sunReference.visible=true;this.host.dataset.sunReferenceEpoch=String(epoch);this.host.dataset.sunReferenceDirection=JSON.stringify(direction);}catch{this.sunReference.visible=false;this.sunLabel.hidden=true;}
   const shown=rows.filter(row=>row.scenePosition);
   this.earthRadius=earthRadius;this.earth.scale.setScalar(earthRadius/EARTH_RADIUS);this.globe.atmosphere.scale.setScalar(earthRadius/EARTH_RADIUS);this.controls.minDistance=Math.max(1e-7,earthRadius*3.8);if(this.camera.position.length()<this.controls.minDistance)this.camera.position.setLength(this.controls.minDistance);this.host.dataset.earthRadius=String(earthRadius);
   const previous=new Map(this.items.map(item=>[item.row.key,item]));this.selected=selected;
@@ -52,6 +55,7 @@ export class EncounterViewer {
  draw(){if(!this.active)return;const near=Math.min(.1,Math.max((this.earthRadius??EARTH_RADIUS)*.03,this.camera.position.length()*.001));if(this.camera.near!==near){this.camera.near=near;this.camera.updateProjectionMatrix();}this.camera.updateMatrixWorld();const w=this.host.clientWidth,h=this.host.clientHeight,cam=this.camera.position;
   for(const item of this.items){if(!markerSize(item.row).known)item.mesh.quaternion.copy(this.camera.quaternion);const depth=-item.mesh.position.clone().applyMatrix4(this.camera.matrixWorldInverse).z;item.mesh.scale.setScalar(item.markerPixels*Math.max(.01,depth)*Math.tan(this.camera.fov*Math.PI/360)/Math.max(1,h));}this.renderer.render(this.scene,this.camera);
   for(const {mesh,button} of this.items){const position=mesh.position.clone(),p=position.clone().project(this.camera),occluded=sphereOccludes(cam.toArray(),position.toArray(),this.earthRadius??EARTH_RADIUS),x=(p.x*.5+.5)*w;button.hidden=!!occluded||p.z>1||p.z< -1||Math.abs(p.x)>1||Math.abs(p.y)>1;button.style.left=x+'px';button.style.top=(-p.y*.5+.5)*h+'px';button.classList.toggle('label-right',x>w-120);button.classList.toggle('label-left',x<120);}
+  if(this.sunReference&&this.sunLabel){const point=this.sunReference.position,p=point.clone().project(this.camera),x=(p.x*.5+.5)*w;this.sunLabel.hidden=!this.sunReference.visible||sphereOccludes(cam.toArray(),point.toArray(),this.earthRadius??EARTH_RADIUS)||p.z>1||p.z< -1||Math.abs(p.x)>1||Math.abs(p.y)>1;this.sunLabel.style.left=Math.max(80,Math.min(w-80,x))+'px';this.sunLabel.style.top=(-p.y*.5+.5)*h+'px';}
  }
  zoom(factor){this.camera.position.multiplyScalar(factor);this.camera.position.setLength(Math.min(32,Math.max(this.controls.minDistance,this.camera.position.length())));this.controls.update();this.draw();}
  focusEarth(){this.controls.target.set(0,0,0);this.camera.position.setLength((this.earthRadius??EARTH_RADIUS)*4.5);this.controls.update();this.draw();}

@@ -13,3 +13,13 @@
 .viewer-settings{position:relative;font-size:9px;color:var(--mint)}.viewer-settings summary{cursor:pointer;white-space:nowrap}.viewer-settings label{position:absolute;right:0;top:24px;z-index:12;display:flex;gap:7px;align-items:center;white-space:nowrap;padding:14px;background:#101c25;border:1px solid #35494e;border-radius:6px;box-shadow:0 6px 22px #0008}.viewer-settings input{accent-color:var(--mint)}
 
 .viewer-toolbar{position:relative;z-index:10}.viewer-settings{z-index:12}
+
+/* Keep selection and image loading from resizing the page. */
+#detail-panel{height:1020px;min-height:1020px;max-height:1020px;overflow:auto;scrollbar-gutter:stable}
+@media(max-width:800px){#detail-panel{height:640px;min-height:640px;max-height:640px;overflow:auto}}
+
+
+.observatory{overflow-anchor:none}
+.sun-reference-label{position:absolute;z-index:4;pointer-events:none;transform:translate(-50%,17px);font-size:9px;color:#f2ca83;white-space:nowrap;background:#111821c9;padding:4px 7px;border:1px solid #6b5836;border-radius:4px}
+
+.observatory>.map-panel{height:1020px;min-height:0}.observatory>.map-panel>.space-map{min-height:0}.observatory>.map-panel:fullscreen{height:100vh}@media(max-width:800px){.observatory>.map-panel{height:850px}}@media(max-width:480px){.observatory>.map-panel{height:800px}}
