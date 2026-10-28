@@ -1,5 +1,7 @@
 # Perigee — NASA Asteroid Explorer
 
+![JavaScript](https://img.shields.io/badge/JavaScript-8A7018?style=flat-square) ![Three.js](https://img.shields.io/badge/Three.js-31464D?style=flat-square) ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-A85C24?style=flat-square)
+
 An interactive learning project by Zak Rademacher that turns NASA/JPL data into an explorable 3D view of near-Earth asteroid encounters.
 
 **[Open the live explorer](https://perigee.zakjrademacher.workers.dev/)** · [Data methodology](docs/METHODOLOGY.md) · [Run locally](#run-and-verify)
