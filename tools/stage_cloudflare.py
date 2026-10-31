@@ -6,6 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--deploy',action='store_true',help='Run a dry-run and then publish the staged production build')
+    parser.add_argument('--evidence',type=Path,help='New verification record directory; preserve older deployment evidence')
     args=parser.parse_args()
     output=ROOT/'.cloudflare/output'
     if not (output/'v0/config.json').is_file():raise SystemExit('Run pnpm run build:cloudflare first.')
@@ -22,7 +23,7 @@ def main():
             assert hashlib.sha256(destination.read_bytes()).hexdigest()==digest
             records.append({'path':relative.as_posix(),'sha256':digest})
     record={'stage':str(stage),'files':records,'production_deploy_requested':args.deploy}
-    evidence=ROOT/'evidence/earth-upgrade';evidence.mkdir(parents=True,exist_ok=True)
+    evidence=args.evidence or ROOT/'evidence/earth-upgrade';evidence.mkdir(parents=True,exist_ok=True)
     (evidence/'deployment-staging.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
     print('Staged portable build:',stage,flush=True)
     if args.deploy:

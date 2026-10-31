@@ -1,0 +1,17 @@
+{
+  "name": "Perigee / Observatory",
+  "stylesheet": "dist/studio.css",
+  "css_variables": {
+    "bg": "#080F1C",
+    "panel": "#111D30",
+    "line": "#2A3D59",
+    "text": "#EEF5FF",
+    "muted": "#A0B3CD",
+    "mint": "#99D6FF",
+    "amber": "#FFB473",
+    "font": "'Segoe UI',Arial,sans-serif",
+    "display": "'Segoe UI',Arial,sans-serif"
+  },
+  "motion": "Staggered arrival and tactile hover; prefers-reduced-motion disables decorative animation.",
+  "status_policy": "Brand accents are independent of labeled success, warning and error states."
+}
