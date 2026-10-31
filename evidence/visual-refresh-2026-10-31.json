@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "catalog_rows_observed": 169,
+  "pha_filtered_csv_rows": 22,
+  "search_empty_state_and_reset": true,
+  "2d_and_3d_mode_switches": true,
+  "actual_viewer_captured": true,
+  "about_dialog_keyboard_close": true,
+  "mobile_390px_no_page_overflow": true,
+  "reduced_motion_no_css_animation": true,
+  "javascript_errors": [],
+  "provenance_displayed": "Source: NASA / JPL NeoWs. Window: 2026-10-31 through 2026-11-29 (UTC). Retrieved 2026-10-31T17:59:07.106Z. Reused the shared NASA catalog cache within its source refresh interval. Candidate coverage: 2026-10-24 through 2026-12-06. ",
+  "scope": "Observed provider data and existing calculations. Provider counts can change; this is not a fixed astronomical benchmark."
+}

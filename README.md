@@ -6,7 +6,9 @@ An interactive learning project by Zak Rademacher that turns NASA/JPL data into 
 
 **[Open the live explorer](https://perigee.zakjrademacher.workers.dev/)** · [Data methodology](docs/METHODOLOGY.md) · [Run locally](#run-and-verify)
 
-![Current Earth-centered viewer with blue lunar orbit guide, amber Earth-orbit guide and selected Moon profile](docs/images/perigee-viewer.png)
+![Perigee’s refreshed observatory workspace](docs/images/perigee-studio.png)
+
+The October 31 visual refresh adds an ice-blue and orange observatory workspace, coordinated motion and reduced-motion support. Scientific calculations retain their existing definitions. [Presentation maintenance](docs/VISUAL_DESIGN.md) · [New live browser checks](evidence/visual-refresh-2026-10-31.json) · [2D schematic preview](docs/images/perigee-schematic-studio.png). The separate 2D view uses illustrative bearings, as labeled in the interface.
 
 ## What you can explore
 
