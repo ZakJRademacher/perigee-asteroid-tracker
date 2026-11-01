@@ -2,7 +2,7 @@
 
 ## Earth imagery
 
-The 3D globe uses unmodified, locally served NASA textures:
+The globe uses the following original NASA textures, served with the application:
 
 - Surface: [Blue Marble](https://science.nasa.gov/resource/blue-marble/), NASA/GSFC, Reto Stöckli. Historical composite published in 2002.
 - Clouds: [Blue Marble with clouds](https://svs.gsfc.nasa.gov/2709/), NASA/GSFC, Reto Stöckli. Historical composite published in 2002.
@@ -22,7 +22,7 @@ Three.js sphere UV registration maps longitude 0° to local +X, north to +Y and 
 
 The selected UTC epoch is shared with the JPL asteroid positions and path. **Live clock** updates it once per second when the current time is in the loaded window. Changing the time field or slider pauses live time. **Now** resumes it or loads today's window. Hidden tabs suspend clock work, and rejoining the tab catches up to the current UTC time. Historical/future windows start fixed. Background animation only changes the star-field appearance and cannot alter Earth orientation.
 
-This educational globe uses UTC as the Earth-rotation time input, without ingesting measured UT1−UTC or polar-motion corrections. It is not a full ITRF realization, a telescope-pointing solution or an impact/geolocation tool. No sub-arcsecond orientation accuracy is claimed. Earth, Moon and Sun use physical reference radii on the distance scale. Asteroid markers remain enlarged; a dot overlapping a body on screen does not indicate an impact. The 2D schematic retains its illustrated Earth and decorative bearings.
+The globe uses UTC for Earth rotation and does not ingest measured UT1−UTC or polar-motion corrections. It is not a full ITRF realization, a telescope-pointing solution or an impact/geolocation tool. No sub-arcsecond orientation accuracy is claimed. Earth, Moon and Sun use physical reference radii on the distance scale. Asteroid markers remain enlarged; a dot overlapping a body on screen does not indicate an impact. The 2D schematic retains its illustrated Earth and decorative bearings.
 
 ## Diameter encoding
 
