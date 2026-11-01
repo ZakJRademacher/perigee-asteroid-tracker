@@ -2,7 +2,7 @@
 
 ## Encounter grain
 
-One catalog record is one asteroid's predicted Earth close approach: key = NASA ID + approach timestamp. Only Earth events are retained; repeated keys are deduplicated. Unknown sizes stay unknown. Invalid required distances, velocities or times are excluded and counted. Summary metrics/CSV use encounter records, and the distance filter explicitly refers to closest approach. A day filter selects encounter day independently of the position epoch.
+The catalog counts predicted Earth close approaches. Each record is keyed by NASA ID and approach timestamp, so one asteroid can have more than one encounter record. Only Earth events are retained; repeated keys are deduplicated. Unknown sizes stay unknown. Invalid required distances, velocities or times are excluded and counted. Summary metrics/CSV use encounter records, and the distance filter explicitly refers to closest approach. A day filter selects encounter day independently of the position epoch.
 
 ## JPL source request
 
@@ -26,7 +26,7 @@ One uniform linear position scale applies to all points and the selected future 
 
 ## Selected trajectory
 
-No object is automatically selected at startup. Selecting a dot/catalog record creates only that object's next 30 days of Earth-relative positions, at one-hour intervals starting at the current position epoch. The unclipped path starts at the same interpolated position as the dot and ends at epoch + 30 days, limited to available coverage. Displayed segments are clipped to the viewing sphere, so their endpoints can instead lie on that boundary. Clear selection, disabling the path checkbox or filtering out the selection removes the line. A different selection replaces it. Grid circles are reference range guides, not other asteroid orbits.
+The app starts with no selected object. Selecting a dot or catalog row draws that asteroid's next 30 days of Earth-relative positions, sampled hourly from the shared position epoch. The unclipped path starts at the same interpolated position as the dot and ends at epoch + 30 days, limited to available coverage. Displayed segments are clipped to the viewing sphere, so their endpoints can instead lie on that boundary. Clear selection, disabling the path checkbox or filtering out the selection removes the line. A different selection replaces it. Grid circles are reference range guides, not other asteroid orbits.
 
 These are geometric geocentric trajectories: Earth is the origin at each sample time. They are not apparent telescope bearings (no light-time or aberration corrections), closed Earth satellite orbits, full solar orbits, impact probabilities or covariance envelopes. Changing time does not independently numerically integrate the bodies; it evaluates the sampled Horizons ephemeris. Live clock uses the current UTC time when it lies within the loaded window. Manual epoch edits pause live time; Now resumes it. Earth orientation, sunlight, asteroid positions and the selected path use that same epoch. For historical encounter windows, the initial epoch is noon on the first day rather than falsely labeling it current.
 
