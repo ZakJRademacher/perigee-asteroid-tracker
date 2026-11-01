@@ -2,7 +2,7 @@
   "title": "Perigee",
   "eyebrow": "NEAR-EARTH OBSERVATORY",
   "description": "A little perspective on our cosmic neighborhood.",
-  "format": "Interactive scientific visualization",
+  "format": "NASA / JPL · JavaScript · Three.js",
   "image": "docs/images/perigee-schematic-studio.png",
   "tokens": "design-tokens.json",
   "color_roles": {
@@ -14,6 +14,7 @@
     "accent": "amber"
   },
   "frame_label": "NASA / JPL explorer",
-  "preview_note": "2D schematic; illustrative bearings",
-  "footer": "THREE.JS / NASA / JPL"
+  "preview_note": "2D schematic · illustrative directions",
+  "footer": "THREE.JS / NASA / JPL",
+  "preview_mode": "contain"
 }
