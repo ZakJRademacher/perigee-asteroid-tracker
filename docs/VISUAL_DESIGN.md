@@ -12,7 +12,6 @@ python tools/check_visual_refresh.py --url <local URL> --evidence <new evidence 
 
 The browser check needs development Playwright and Edge support. Use new evidence folders to keep the earlier measurements intact. Run `node tools/build-worker.mjs` and restart the local preview after editing. The Worker embeds frontend files at build time; publication uses the existing Cloudflare configuration.
 
-For practice, change one accent in a copy and rebuild. Check that the controls, downloads, counts, mobile layout, and explicit warning labels still work before accepting the change.
 
 ## Portfolio thumbnails
 

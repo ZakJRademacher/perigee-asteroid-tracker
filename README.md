@@ -2,7 +2,7 @@
 
 Perigee turns NASA/JPL encounter data into an interactive view of asteroids passing near Earth. You can explore a 30-day timeline, select an object, and follow its predicted path relative to Earth.
 
-My role covered the concept, feature requirements, and visual direction. The project combines JavaScript, Three.js, and a Cloudflare Worker for the data endpoints.
+I developed substantial parts of the JavaScript and Worker implementation alongside the concept, feature requirements, and visual direction. The project uses Three.js for the 3D view and a Cloudflare Worker for the data endpoints.
 
 **[Open the live explorer](https://perigee.zakjrademacher.workers.dev/)** · [Methodology](docs/METHODOLOGY.md) · [Run locally](#run-and-verify)
 
