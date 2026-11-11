@@ -66,3 +66,5 @@ If OneDrive placeholders cause a Build Output symlink error, `python tools/stage
 Frontend and viewer: `dist/`. Data endpoints: `worker/`. Tests and retained JPL fixtures: `tests/`. Build, validation, and preview commands: `tools/`. [Visual maintenance](docs/VISUAL_DESIGN.md) · [Published browser checks](evidence/visual-refresh-2026-10-31.json).
 
 NASA imagery credits and hashes are in `dist/assets/provenance.json`. Three.js and Astronomy Engine are vendored with their licenses and integrity records. Earth and Moon imagery are historical composites, not current camera feeds. This is an independent visualization project, not a NASA product or a precision navigation or impact-assessment tool.
+
+Original code and documentation: [MIT](LICENSE). Vendored libraries and NASA/JPL imagery keep their own licenses and credits.
