@@ -9,7 +9,7 @@ async function database(){
   request.onerror=request.onblocked=()=>resolve(null);
   request.onsuccess=()=>{
    const db=request.result;db.onversionchange=()=>db.close();resolve(db);
-   try{const cursor=db.transaction('vectors','readwrite').objectStore('vectors').openCursor();cursor.onsuccess=()=>{const item=cursor.result;if(!item)return;if(Date.now()-Date.parse(item.value.retrievedAt)>3600000)item.delete();item.continue();};}catch{}
+   try{const cursor=db.transaction('vectors','readwrite').objectStore('vectors').openCursor();cursor.onsuccess=()=>{const item=cursor.result;if(!item)return;if(Date.now()-Date.parse(item.value.retrievedAt)>86400000)item.delete();item.continue();};}catch{}
   };
  });
  return opening;

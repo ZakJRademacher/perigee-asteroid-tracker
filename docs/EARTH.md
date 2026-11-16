@@ -52,9 +52,9 @@ The viewing radius fixes the distance scale throughout scrubbing, loading and se
 
 ## Thirty-day encounter catalog
 
-The catalog endpoint requests 44 UTC calendar days in seven serial batches: 30 timeline days plus a seven-day buffer at each end. Responses are atomic. A bounded shared Worker cache and browser cache reuse original retrieval timestamps for at most 15 minutes with a personal key, or an hour with the demo key. The private NASA key is a Worker secret; provider links are removed before public caching. Saved fallback data uses its actual timeline and candidate coverage.
+The catalog endpoint requests 44 UTC calendar days in seven serial batches: 30 timeline days plus a seven-day buffer at each end. Responses are atomic. A Workers KV store shared by every Worker instance, and the browser cache, reuse original retrieval timestamps for at most 15 minutes with a personal key, or an hour with the demo key. The private NASA key is a Worker secret; provider links are removed before public caching. Saved fallback data uses its actual timeline and candidate coverage.
 
-All unique buffered candidates matching the filters are queued serially for JPL data. Position availability and current Earth-center radius determine visibility at the selected epoch. There is no 60-marker cap in 3D. The separate 2D schematic retains its illustrative layout. New discoveries enter after a successful catalog refresh, subject to caching. The buffer reduces boundary omissions but does not constitute a complete inventory of all objects in the sphere.
+All unique buffered candidates matching the filters are queued for JPL data. Already-cached vectors arrive in batches of 12; the rest load one at a time. Position availability and current Earth-center radius determine visibility at the selected epoch. There is no 60-marker cap in 3D. New discoveries enter after a successful catalog refresh, subject to caching. The buffer reduces boundary omissions but does not constitute a complete inventory of all objects in the sphere.
 
 Horizons now supplies 60 days of hourly states: 1441 samples cover every time in the 30-day catalog plus a complete selected 30-day future path. The current-epoch equatorial frame is applied to the entire path. Near/far clipping adapts to the physical body radii; time scrubbing itself does not resize or reframe Earth.
 

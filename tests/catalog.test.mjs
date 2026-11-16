@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {catalogWindows,mergeCatalog,fetchCatalog,fieldRows,encounterRows} from '../dist/catalog.js';
+import {catalogWindows,mergeCatalog,fetchCatalog,encounterRows} from '../dist/catalog.js';
 import {makeCatalogService} from '../worker/catalog.js';
 const start='2026-10-22';
 const empty=()=>({near_earth_objects:{}});
@@ -22,12 +22,6 @@ test('buffered NASA refresh needs seven serialized requests and does not retry a
  const fetcher=async url=>{active++;peak=Math.max(peak,active);calls++;const u=new URL(url);assert.equal(u.hostname,'api.nasa.gov');assert.ok(Date.parse(u.searchParams.get('end_date'))-Date.parse(u.searchParams.get('start_date'))<=6*86400000);await Promise.resolve();active--;return {ok:true,json:async()=>empty()};};
  await fetchCatalog(start,{fetcher,onProgress:n=>progress.push(n)});assert.equal(calls,7);assert.equal(peak,1);assert.deepEqual(progress,[1,2,3,4,5,6,7]);
  calls=0;await assert.rejects(fetchCatalog(start,{fetcher:async()=>{calls++;return {ok:false,status:429};}}),/rate limit/);assert.equal(calls,1);
-});
-test('later encounters enter the marker field as the position epoch advances, while selection stays available',()=>{
- const first=Date.parse(start),records=Array.from({length:5},(_,i)=>({key:'object-'+i,epoch:first+i*86400000})),original=JSON.stringify(records);
- assert.deepEqual(fieldRows(records,first,null,3).map(r=>r.key),['object-0','object-1','object-2']);
- assert.deepEqual(fieldRows(records,first+4*86400000,null,3).map(r=>r.key),['object-4','object-3','object-2']);
- assert.ok(fieldRows(records,first+4*86400000,'object-0',3).some(r=>r.key==='object-0'));assert.equal(JSON.stringify(records),original);
 });
 test('shared catalog cache coalesces visitors and expires according to NASA retrieval time',async()=>{
  let now=Date.parse(start),calls=0;const service=makeCatalogService({now:()=>now,fetcher:async()=>{calls++;return {ok:true,json:async()=>empty()};}});

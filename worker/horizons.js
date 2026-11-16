@@ -1,4 +1,5 @@
-export const HORIZONS_TTL=3600000;
+// Horizons predictions change slowly; a day-old vector set is still the current solution.
+export const HORIZONS_TTL=86400000;
 export function validateOrbitRequest(id,start){
  if(!/^\d{7,10}$/.test(id??''))throw Error('A numeric NASA small-body SPK ID is required.');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(start??''))throw Error('A valid starting date is required.');
@@ -20,15 +21,23 @@ export function parseHorizons(payload,id,start,retrievedAt=new Date().toISOStrin
 }
 export function makeHorizonsService({fetcher=fetch,now=Date.now,persistentCache=null,seed=[]}={}){
  const memory=new Map(seed.map(d=>[d.id+'/'+d.start,d])),pending=new Map();let tail=Promise.resolve(),blockedUntil=0;
- return async function getOrbit(id,start){validateOrbitRequest(id,start);const key=id+'/'+start,cacheKey=new Request('https://perigee-horizons-cache.invalid/v3-60d/'+key),stamp=now();
-  const fresh=data=>data?.schema===1&&data.samples?.length===1441&&data.id===id&&data.start===start&&stamp-Date.parse(data.retrievedAt)>=0&&stamp-Date.parse(data.retrievedAt)<HORIZONS_TTL;
-  if(fresh(memory.get(key)))return memory.get(key);
+ const cacheKey=(id,start)=>new Request('https://perigee-horizons-cache.invalid/'+horizonsKey(start,id));
+ const isFresh=(data,id,start)=>data?.schema===1&&data.samples?.length===1441&&data.id===id&&data.start===start&&now()-Date.parse(data.retrievedAt)>=0&&now()-Date.parse(data.retrievedAt)<HORIZONS_TTL;
+ const remember=(key,data)=>{memory.set(key,data);if(memory.size>64)memory.delete(memory.keys().next().value);};
+ // Cached vectors only (memory, then the shared store); never contacts JPL.
+ async function peek(id,start){validateOrbitRequest(id,start);const key=id+'/'+start;if(isFresh(memory.get(key),id,start))return memory.get(key);if(!persistentCache)return null;try{const hit=await persistentCache.match(cacheKey(id,start));if(hit){const data=await hit.json();if(isFresh(data,id,start)){remember(key,data);return data;}}}catch{}return null;}
+ async function getOrbit(id,start){validateOrbitRequest(id,start);const key=id+'/'+start;
+  if(isFresh(memory.get(key),id,start))return memory.get(key);
   if(pending.has(key))return pending.get(key);
-  const operation=(async()=>{if(persistentCache){try{const hit=await persistentCache.match(cacheKey);if(hit){const data=await hit.json();if(fresh(data)){memory.set(key,data);return data;}}}catch{}}
+  const operation=(async()=>{const cached=await peek(id,start);if(cached)return cached;
    const job=tail.catch(()=>{}).then(async()=>{if(now()<blockedUntil){const e=Error('JPL is temporarily unavailable; please retry after the backoff period.');e.retryAfter=Math.ceil((blockedUntil-now())/1000);throw e;}
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);let response,payload;
     try{response=await fetcher(horizonsURL(id,start),{headers:{'User-Agent':'Perigee/1.3 (https://github.com/ZakJRademacher)','Accept':'application/json'},signal:controller.signal});if(!response.ok){blockedUntil=now()+(response.status===429||response.status===503?600000:10000);const e=Error('JPL Horizons is temporarily unavailable (HTTP '+response.status+').');e.retryAfter=Math.ceil((blockedUntil-now())/1000);throw e;}payload=await response.json();}catch(e){blockedUntil=Math.max(blockedUntil,now()+10000);e.retryAfter??=Math.ceil((blockedUntil-now())/1000);throw e;}finally{clearTimeout(timer);}
-    let data;try{data=parseHorizons(payload,id,start,new Date(now()).toISOString());}catch(e){if(/signature\/version|unexpected origin/.test(e.message)){blockedUntil=now()+600000;e.retryAfter=600;}throw e;}memory.set(key,data);if(memory.size>64)memory.delete(memory.keys().next().value);if(persistentCache){try{await persistentCache.put(cacheKey,new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json','Cache-Control':'public,max-age=3600'}}));}catch{}}return data;});tail=job.catch(()=>{});return job;
+    let data;try{data=parseHorizons(payload,id,start,new Date(now()).toISOString());}catch(e){if(/signature\/version|unexpected origin/.test(e.message)){blockedUntil=now()+600000;e.retryAfter=600;}throw e;}remember(key,data);if(persistentCache){try{await persistentCache.put(cacheKey(id,start),new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json','Cache-Control':'public,max-age='+HORIZONS_TTL/1000}}));}catch{}}return data;});tail=job.catch(()=>{});return job;
   })().finally(()=>pending.delete(key));pending.set(key,operation);return operation;
- };
+ }
+ getOrbit.peek=peek;
+ return getOrbit;
 }
+// Shared-store key, grouped by window start so one window's vectors can be listed together.
+export function horizonsKey(start,id){return 'v4-60d/'+start+'/'+id;}

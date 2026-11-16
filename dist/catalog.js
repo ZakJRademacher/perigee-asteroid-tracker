@@ -34,12 +34,6 @@ export async function fetchCatalog(start,{fetcher=fetch,signal,onProgress=()=>{}
  }
  return mergeCatalog(start,feeds);
 }
-export function fieldRows(records,epoch,selected,limit=60){
- const sorted=[...records].sort((a,b)=>Math.abs(a.epoch-epoch)-Math.abs(b.epoch-epoch)||a.epoch-b.epoch||a.key.localeCompare(b.key));
- const result=sorted.slice(0,limit),chosen=records.find(r=>r.key===selected);
- if(chosen&&!result.includes(chosen)){result.pop();result.push(chosen);}
- return result;
-}
 
 export function encounterRows(feed,start,days=CATALOG_DAYS){
  const data=normalizeFeed(feed),first=Date.parse(start+'T00:00:00Z'),end=first+days*86400000;

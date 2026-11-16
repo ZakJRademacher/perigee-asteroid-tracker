@@ -39,3 +39,11 @@ dialog .about-list b{color:#dce8ef;font-weight:600}
 .celestial-body-point.tiny.merged .body-hover-label{display:none}
 .celestial-body-point.tiny.label-below .body-hover-label{bottom:auto;top:20px}
 .body-marker.label-below .body-marker-label{bottom:auto;top:20px}
+/* Camera framing presets read as a pair of real buttons. */
+.viewer-toolbar .view-mode #earth-moon,.viewer-toolbar .view-mode #fit-field{padding:7px 12px;font-size:10px;color:#B9DCFC;border-radius:5px}
+.viewer-toolbar .view-mode #earth-moon:hover,.viewer-toolbar .view-mode #fit-field:hover{background:#2C4B7066}
+.viewer-toolbar .view-mode #earth-moon{border-right:1px solid #42638666;border-top-right-radius:0;border-bottom-right-radius:0}
+.viewer-toolbar .map-controls{margin-left:auto}
+.position-clock #position-play{color:var(--mint);font-weight:600}
+/* These sections are rebuilt on every data refresh; never use them as scroll anchors. */
+.catalog,.timeline-panel,#asteroid-table,#timeline,#detail-panel{overflow-anchor:none}
