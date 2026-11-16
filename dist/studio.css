@@ -35,3 +35,7 @@ dialog .about-list b{color:#dce8ef;font-weight:600}
 .celestial-body-point.tiny{border:1.5px solid #c9d2dacc;width:14px;height:14px}
 .zoom-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:9px 14px;border-radius:8px;background:#0c1724e6;border:1px solid #4d7290;color:#d8e8f4;font-size:12px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:6}
 .zoom-hint.visible{opacity:1}
+.celestial-body-point.tiny.merged{border-color:transparent}
+.celestial-body-point.tiny.merged .body-hover-label{display:none}
+.celestial-body-point.tiny.label-below .body-hover-label{bottom:auto;top:20px}
+.body-marker.label-below .body-marker-label{bottom:auto;top:20px}
