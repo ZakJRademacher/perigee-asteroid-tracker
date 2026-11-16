@@ -18,14 +18,17 @@ export function displayScale(records,ephemerides,epoch,selected){
  return extent/7.8;
 }
 export class EphemerisLoader {
- constructor({fetcher=fetch,onUpdate=()=>{},cache=vectorCache,now=Date.now}={}){this.fetcher=(...args)=>fetcher(...args);this.onUpdate=onUpdate;this.cache=cache;this.now=now;this.data=new Map();this.errors=new Map();this.pending=[];this.running=false;this.start='';this.generation=0;this.paused=false;}
- reset(start){this.start=start;this.generation++;this.data.clear();this.errors.clear();this.pending=[];this.paused=false;}
+ constructor({fetcher=fetch,onUpdate=()=>{},cache=vectorCache,now=Date.now}={}){this.fetcher=(...args)=>fetcher(...args);this.onUpdate=onUpdate;this.cache=cache;this.now=now;this.data=new Map();this.errors=new Map();this.pending=[];this.running=false;this.start='';this.generation=0;this.paused=false;this.resumeTimer=0;this.retried=new Set();}
+ reset(start){this.start=start;this.generation++;this.data.clear();this.errors.clear();this.pending=[];this.paused=false;clearTimeout(this.resumeTimer);this.resumeTimer=0;this.retried.clear();}
+ // A backoff pauses the shared queue, then resumes it on its own. The failed
+ // object gets one automatic retry; a repeat failure stays reported.
+ scheduleResume(id,seconds){clearTimeout(this.resumeTimer);const generation=this.generation;this.resumeTimer=setTimeout(()=>{this.resumeTimer=0;if(generation!==this.generation||!this.paused)return;this.paused=false;if(!this.retried.has(id)){this.retried.add(id);this.errors.delete(id);}this.onUpdate();},Math.max(1,seconds)*1000);}
  ensure(rows,selected){if(this.paused)return;const ids=[...new Set(rows.map(r=>r.id))];this.pending=this.pending.filter(id=>ids.includes(id));for(const id of ids)if(!this.data.has(id)&&!this.errors.has(id)&&!this.pending.includes(id)&&id!==this.current)this.pending.push(id);const chosen=rows.find(r=>r.key===selected)?.id;if(chosen&&this.pending.includes(chosen)){this.pending=this.pending.filter(id=>id!==chosen);this.pending.unshift(chosen);}if(this.pending.length)this.pump();}
  async pump(){if(this.running||this.paused)return;this.running=true;try{while(this.pending.length&&!this.paused){const id=this.pending.shift(),start=this.start,generation=this.generation;this.current=id;
    try{const key='perigee-horizons-60d-'+start+'-'+id;let data;try{const old=await this.cache.get(key);if(validEphemeris(old,id,start)&&this.now()-Date.parse(old.retrievedAt)>=0&&this.now()-Date.parse(old.retrievedAt)<3600000)data=old;}catch{}
-    if(!data){const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),35000);try{const r=await this.fetcher('/api/ephemeris?id='+id+'&start='+start+'&coverage=60',{signal:controller.signal});const body=await r.json();if(!r.ok){const e=Error(body.error??'JPL request failed.');e.retryAfter=body.retryAfter;throw e;}if(!validEphemeris(body,id,start))throw Error('Invalid ephemeris response.');data=body;try{await this.cache.set(key,data);}catch{}}finally{clearTimeout(timeout);}}
+    if(!data){const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),35000);try{const r=await this.fetcher('/api/ephemeris?id='+id+'&start='+start,{signal:controller.signal});const body=await r.json();if(!r.ok){const e=Error(body.error??'JPL request failed.');e.retryAfter=body.retryAfter;throw e;}if(!validEphemeris(body,id,start))throw Error('Invalid ephemeris response.');data=body;try{await this.cache.set(key,data);}catch{}}finally{clearTimeout(timeout);}}
     if(generation===this.generation)this.data.set(id,data);
-   }catch(e){if(generation===this.generation){this.errors.set(id,e.name==='AbortError'?'JPL request timed out.':e.message);if(e.retryAfter){this.paused=true;this.pending=[];}}}
+   }catch(e){if(generation===this.generation){this.errors.set(id,e.name==='AbortError'?'JPL request timed out.':e.message);if(e.retryAfter){this.paused=true;this.pending=[];this.scheduleResume(id,Number(e.retryAfter)||10);}}}
    finally{this.current=null;this.onUpdate();}
   }}finally{this.running=false;this.onUpdate();}}
 }
