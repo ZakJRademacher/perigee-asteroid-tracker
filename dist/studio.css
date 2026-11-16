@@ -17,3 +17,21 @@ h1{font-weight:500;letter-spacing:-3px}h1 em{color:#A1D7FF;font-style:normal}.in
 @media(max-width:800px){.topbar{margin:12px 4% 0;padding:0 20px;height:74px}.stats{gap:12px;padding:20px 0}.stats>div{padding:20px!important}.toolbar{padding:15px}.intro{padding-top:35px}.timeline-panel{padding:22px}.observatory{border-radius:18px}.detail-panel{background:#15263D}.table-wrap{border-radius:12px}}
 @media(max-width:480px){.topbar{padding:0 15px}.brand{font-size:24px}.stats>div{padding:18px 16px!important}.stats strong{font-size:27px}.stats span{font-size:7px}.stats small{font-size:8px}h1{font-size:43px;letter-spacing:-2px}.timeline-panel{padding:20px 16px}.toolbar{padding:14px 12px}}
 @media(prefers-reduced-motion:reduce){.intro,.stats>div,.observatory{animation:none}.object-link{transition:none}.object-link:hover{transform:none}}
+/* Quicker, sharper arrival so content is readable almost immediately. */
+.intro,.stats>div,.observatory{animation-duration:.45s!important}
+.stats>div:nth-child(n){animation-delay:0s}
+@keyframes observatory-arrive{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes instrument-land{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+#retry-positions[hidden]{display:none!important}
+@media(max-width:480px){nav a[href="#approaches"]{display:inline}nav a[href="#explorer"]{display:none}}
+dialog .about-lede{font-size:13.5px;color:#c4d3dd}
+dialog .about-list{margin:6px 0 0;padding-left:18px;font-size:12px;color:#a6b5bf;line-height:1.7}
+dialog .about-list li{margin:5px 0}
+dialog .about-list b{color:#dce8ef;font-weight:600}
+/* True-scale bodies that fall below a few pixels get a locator ring and label. */
+.body-marker{position:absolute;width:16px;height:16px;border:1.5px solid #8fc4ffcc;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 10px #4f9cff66;z-index:4}
+.body-marker::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;background:#bfe0ff;transform:translate(-50%,-50%)}
+.body-marker-label,.celestial-body-point.tiny .body-hover-label{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:block;padding:2px 6px;border-radius:4px;background:#0d1a26d9;border:1px solid #4d7290;color:#d8e8f4;font-size:10px;letter-spacing:.06em;white-space:nowrap}
+.celestial-body-point.tiny{border:1.5px solid #c9d2dacc;width:14px;height:14px}
+.zoom-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:9px 14px;border-radius:8px;background:#0c1724e6;border:1px solid #4d7290;color:#d8e8f4;font-size:12px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:6}
+.zoom-hint.visible{opacity:1}

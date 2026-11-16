@@ -66,3 +66,4 @@ test('provider credentials and unused URLs never enter fresh, persisted or seede
  }
  assert.equal(persisted.includes(privateKey),false);
 });
+test('a single failed NASA page is retried once; rate limits and repeat failures are not',async()=>{const start='2026-10-22',page={element_count:0,near_earth_objects:{}};let calls=0;await fetchCatalog(start,{fetcher:async()=>{calls++;if(calls===2)return {ok:false,status:502};if(calls===4)throw TypeError('network');return {ok:true,json:async()=>page};}});assert.equal(calls,9,'one page retried after HTTP 502, another after a network error');calls=0;await assert.rejects(fetchCatalog(start,{fetcher:async()=>{calls++;return {ok:false,status:500};}}),/HTTP 500/);assert.equal(calls,2);});

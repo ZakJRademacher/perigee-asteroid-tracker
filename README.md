@@ -21,7 +21,7 @@ The 3D view uses one linear distance scale. Earth, Moon, and Sun use physical re
 
 Choose a window, then rotate, zoom, or select a dot or table row. The default view centers Earth and frames the lunar orbit. **Reset view** returns there; **Fit field** frames the asteroid viewing sphere. Choose a radius of **25, 50, or 100 lunar distances**; one LD is 384,400 km.
 
-The time slider changes the shared position epoch. Editing it pauses **Live clock**; **Now** resumes current time when it falls within the loaded window. Clicking the selected object again or using **Close** clears its details and path. Sun and Moon also have selectable profiles. The blue lunar and amber Earth-orbit guides are instantaneous two-body references, rather than full future simulations.
+The time slider changes the shared position epoch, and **Play** animates it forward one day per second. Selecting a table row scrolls back to the viewer and frames Earth with that object. When Earth or the Moon is too small to see at the current zoom, a labeled ring marks its position. Click the viewer before scrolling to zoom, so page scrolling never gets trapped. Editing it pauses **Live clock**; **Now** resumes current time when it falls within the loaded window. Clicking the selected object again or using **Close** clears its details and path. Sun and Moon also have selectable profiles. The blue lunar and amber Earth-orbit guides are instantaneous two-body references, rather than full future simulations.
 
 Encounter filters describe closest approach, not the object's current distance. The 3D field only shows positioned catalog candidates within the chosen radius. It isn't a complete inventory of everything near Earth. [Timeline and viewing-field guide](docs/VIEWING_FIELD.md).
 

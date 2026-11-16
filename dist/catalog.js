@@ -23,9 +23,14 @@ export async function fetchCatalog(start,{fetcher=fetch,signal,onProgress=()=>{}
  const windows=catalogWindows(start),feeds=[];
  for(const [index,window] of windows.entries()){
   onProgress(index+1,windows.length);
-  const response=await fetcher(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${window.start}&end_date=${window.end}&api_key=${encodeURIComponent(apiKey)}`,{signal});
-  if(!response.ok)throw Error(response.status===429?'NASA request rate limit reached.':'NASA returned HTTP '+response.status+'.');
-  feeds.push(await response.json());
+  // NeoWs occasionally fails a single page; retry it once, but never a rate limit or an abort.
+  for(let attempt=1;;attempt++){
+   try{
+    const response=await fetcher(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${window.start}&end_date=${window.end}&api_key=${encodeURIComponent(apiKey)}`,{signal});
+    if(!response.ok){const e=Error(response.status===429?'NASA request rate limit reached.':'NASA returned HTTP '+response.status+'.');e.final=response.status===429;throw e;}
+    feeds.push(await response.json());break;
+   }catch(e){if(attempt>=2||e.final||e.name==='AbortError'||signal?.aborted)throw e;}
+  }
  }
  return mergeCatalog(start,feeds);
 }
