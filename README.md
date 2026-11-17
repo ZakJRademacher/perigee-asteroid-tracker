@@ -42,7 +42,7 @@ With Node available, run from the repository root:
 ```powershell
 node tools/build-worker.mjs
 node tools/validate-worker.mjs
-node --test tests/model.test.mjs tests/viewer-media.test.mjs tests/ephemeris.test.mjs tests/worker.test.mjs tests/earth.test.mjs tests/catalog.test.mjs tests/field.test.mjs
+node --test "tests/*.test.mjs"
 node tools/serve-worker.mjs
 ```
 
