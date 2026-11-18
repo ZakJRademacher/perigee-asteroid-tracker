@@ -1,0 +1,12 @@
+{
+  "package": "@fontsource-variable/space-grotesk",
+  "version": "5.3.0",
+  "license": "OFL-1.1",
+  "source": "https://registry.npmjs.org/@fontsource-variable/space-grotesk/-/space-grotesk-5.3.0.tgz",
+  "integrity": "sha512-2IxmvfB08i9vnGB3Ym/AXvhRE+8XOjWMXIyDum03c+tPwH0FUoMNQfGpU8NXPxjbws0Vvss3AH0Zqt4oJBBAdw==",
+  "files_sha256": {
+    "space-grotesk-latin-wght-normal.woff2": "0640890476fc1198ab4de571fb658de443c4d85b66466ec09534a8737ab1ce9d",
+    "LICENSE-space-grotesk.txt": "18a4de52385f6b988782639d5d0cc1326e5a8c2de9a7f01d7b20d9aedcc60943"
+  },
+  "modifications": "None. Latin subset only; loaded by @font-face in stage.css."
+}

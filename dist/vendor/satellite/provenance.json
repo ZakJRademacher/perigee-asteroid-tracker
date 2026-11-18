@@ -1,0 +1,27 @@
+{
+  "package": "satellite.js",
+  "version": "7.2.0",
+  "license": "MIT",
+  "source": "https://registry.npmjs.org/satellite.js/-/satellite.js-7.2.0.tgz",
+  "integrity": "sha512-O0GqxEU3SZ6ez1JPYyptPboZMZ6xK1xGEOm+OjUHgi1CuqDEVr+SRQXlbT2eApeoQ7HLh7yFiXR4S8M/+tpVaQ==",
+  "files_sha256": {
+    "constants.js": "39efed0e8259640b7132afefd116197a6eee4171479143b363829e4f04237df1",
+    "ext.js": "713607c9f084a46e886cf089aade527cbfe5d680c539a6728fe52a392edf7194",
+    "io.js": "2cf2254f776eb35aee60f1d914edf7be257bb390edb9f8d21ef4ce3c8a59923d",
+    "propagation.js": "98bffd4671df7ba2550f65c2cd4c2a3e100ed59cf6861044352462b9ec98ba06",
+    "transforms.js": "21666598552a4bba263b1f315d989f116d89d99f33385e94d3cabf676b504ece",
+    "propagation/SatRec.js": "edcffa5f13d8960b4480ff844286ca76ca9d2952e989d9f32fad82c14aa6fd7b",
+    "propagation/check-for-decay.js": "cd13c5ca230657ae6f94f47cac8cc2201d60a5f23f8ddf6a79bf93f580844ee1",
+    "propagation/dpper.js": "ccd5dbde780f132298da240369e685a0654f6feeca2ca99e8c1234206e632b20",
+    "propagation/dscom.js": "4163f176bb7bc196c46f05d5f485fbb64c759fd47ce9fd3c82362b746c641d4d",
+    "propagation/dsinit.js": "5d7ebdc2a28eefcb10e1d857c86cfee4b3db2443541d11d55fcb6a79a561e9ec",
+    "propagation/dspace.js": "5b34f0cd64c12080583b1b75d1d7a48100aaddbfaad267daa45cb3538e22ae17",
+    "propagation/gstime.js": "a84b7910bec97f8c07723d0054ee4d29ef1c3e9a0c746e848529b627bcc8d7cf",
+    "propagation/initl.js": "fe57ab8af951bccfd95f8e6166f1d5374a9dd126291fda183b658ddfa9523ac7",
+    "propagation/propagate.js": "e937521a49439d9881b46b5c015f9d8e4716ae9646797b34a3a55f4f00ce7ee4",
+    "propagation/sgp4.js": "9dd959b01f49395996e93bf483f906696d20b7bb64d4ba1e61d1d73c1c2d7f04",
+    "propagation/sgp4init.js": "cc47b4efcf8bf9ecca73f40e7a922e18668d0de7082f942b4bdedddaca182b78",
+    "LICENSE.md": "1432ff8b94b91db9f242d908e09f2ecb1a0804a03f76ba844cf052c7bb614d9e"
+  },
+  "modifications": "None. Subset of package/dist: OMM parsing, SGP4/SDP4 propagation and coordinate transforms only."
+}

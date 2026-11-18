@@ -1,17 +1,24 @@
 {
-  "name": "Perigee / Observatory",
-  "stylesheet": "dist/studio.css",
+  "name": "Perigee / Stage",
+  "stylesheet": "dist/stage.css",
   "css_variables": {
-    "bg": "#080F1C",
-    "panel": "#111D30",
-    "line": "#2A3D59",
-    "text": "#EEF5FF",
-    "muted": "#A0B3CD",
-    "mint": "#99D6FF",
-    "amber": "#FFB473",
-    "font": "'Segoe UI',Arial,sans-serif",
-    "display": "'Segoe UI',Arial,sans-serif"
+    "bg": "#05070d",
+    "bg-2": "#0a0f1c",
+    "ink": "#eef3ff",
+    "muted": "#a3b0cc",
+    "faint": "#6d7a96",
+    "glass": "rgba(13,19,33,.68)",
+    "glass-strong": "rgba(12,17,30,.9)",
+    "line": "rgba(176,196,255,.13)",
+    "line-strong": "rgba(176,196,255,.26)",
+    "mint": "#8ef0c8",
+    "amber": "#ffb86b",
+    "sky": "#8fd3ff",
+    "violet": "#b9a6ff",
+    "pink": "#ff9ec4",
+    "font": "'Segoe UI',system-ui,-apple-system,Arial,sans-serif",
+    "display": "'Space Grotesk','Segoe UI',system-ui,sans-serif"
   },
-  "motion": "Staggered arrival and tactile hover; prefers-reduced-motion disables decorative animation.",
-  "status_policy": "Brand accents are independent of labeled success, warning and error states."
+  "motion": "Gentle hover and live-status pulse; prefers-reduced-motion disables animation and transitions.",
+  "status_policy": "Brand accents are independent of labeled live, snapshot and error states."
 }
