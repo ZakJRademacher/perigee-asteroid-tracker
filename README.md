@@ -64,6 +64,8 @@ pnpm exec cf deploy --prebuilt --mode production
 
 `cloudflare.config.ts` defines the public Worker and its `workers.dev` route. Credentials and generated output stay outside Git. An optional `NASA_API_KEY` belongs in a server-side secret; no key value is included in the frontend. The demo-key fallback works without one.
 
+Satellite orbit data reaches production through the `Refresh satellite orbits` workflow, because CelesTrak refuses connections from Cloudflare Workers. It needs two repository secrets: `CLOUDFLARE_API_TOKEN` (a token limited to Workers KV Storage: Edit) and `CLOUDFLARE_ACCOUNT_ID`. Run it once by hand from the Actions tab after setting them; `node tools/refresh-satellites.mjs --dry-run` checks the download locally without writing.
+
 If OneDrive placeholders cause a Build Output symlink error, `python tools/stage_cloudflare.py --deploy` stages and hash-checks regular files in a temporary folder before a dry-run and publication. Run it only when intending to deploy.
 
 ## Source and maintenance

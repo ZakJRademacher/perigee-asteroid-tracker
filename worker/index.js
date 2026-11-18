@@ -23,10 +23,11 @@ export default {
    if(request.method==='HEAD')return new Response(null,{status:405});
    try{return Response.json(await services(env).catalog(url.searchParams.get('start')),{headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});}catch(e){const bad=/valid|date|start/.test(e.message);if(!bad)console.error('catalog failure',e.name,redact(e.message));return Response.json({error:bad?e.message:/rate.limit/.test(e.message)?'NASA request limit reached; please retry later.':'NASA catalog unavailable; please retry later.'},{status:bad?400:503,headers:{'Cache-Control':'no-store'}});}
   }
+  // Visitors get the saved copy; only the scheduled job and outside refresh contact CelesTrak.
   if(url.pathname==='/api/satellites'){
    if(request.method==='HEAD')return new Response(null,{status:405});
    const group=url.searchParams.get('group')??'';
-   try{return Response.json(await services(env).satellites(group),{headers:{'Cache-Control':'private,max-age=600','X-Content-Type-Options':'nosniff'}});}catch(e){const bad=/supported satellite group/.test(e.message);if(!bad)console.error('satellite failure',group,e.name,e.message);return Response.json({error:bad?e.message:'Satellite orbit data unavailable; please retry later.'},{status:bad?400:503,headers:{'Cache-Control':'no-store'}});}
+   try{return Response.json(await services(env).satellites(group,{refresh:false}),{headers:{'Cache-Control':'private,max-age=600','X-Content-Type-Options':'nosniff'}});}catch(e){const bad=/supported satellite group/.test(e.message);if(!bad)console.error('satellite failure',group,e.name,e.message);return Response.json({error:bad?e.message:'Satellite orbit data unavailable; please retry later.'},{status:bad?400:503,headers:{'Cache-Control':'no-store'}});}
   }
   if(url.pathname==='/api/satellite-photos'){
    if(request.method==='HEAD')return new Response(null,{status:405});
