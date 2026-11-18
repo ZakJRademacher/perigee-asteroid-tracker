@@ -50,6 +50,16 @@ test('a failed refresh serves the last saved copy, labeled stale, then backs off
  const empty=makeSatelliteService({fetcher,now:()=>now});await assert.rejects(empty('gnss'),/non-JSON/);
 });
 
+test('visitor requests never wait on CelesTrak when a saved copy exists, and pick up outside refreshes',async()=>{
+ const kv=fakeKv();let now=epoch,calls=0;const fetcher=async()=>{calls++;return new Response(JSON.stringify(fixture.groups.geo));};
+ const service=makeSatelliteService({fetcher,now:()=>now,persistentCache:kvCache(kv)});await service('geo');assert.equal(calls,1);
+ now+=SATELLITE_TTL*3;const old=await service('geo',{refresh:false});assert.equal(calls,1);assert.equal(old.stale,true);
+ // An outside job (the GitHub refresh) writes a newer copy straight to the store.
+ const newer={...JSON.parse(kv.store.get(satelliteKey('geo')).value),retrievedAt:new Date(now-60000).toISOString()};
+ await kv.put(satelliteKey('geo'),JSON.stringify(newer),{expirationTtl:259200});
+ const fresh=await service('geo',{refresh:false});assert.equal(fresh.retrievedAt,newer.retrievedAt);assert.equal(fresh.stale,false);assert.equal(calls,1);
+});
+
 test('CelesTrak two-hour download limit keeps the saved copy and waits 30 minutes before asking again',async()=>{
  const kv=fakeKv();let now=epoch,limited=false,calls=0;
  const fetcher=async()=>{calls++;return limited?new Response('GP data has not updated since your last successful\ndownload of GROUP=stations at 2026-11-17 18:00:00 UTC.\nData is updated once every 2 hours.',{status:403}):new Response(JSON.stringify(fixture.groups.stations));};

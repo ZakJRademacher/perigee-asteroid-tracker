@@ -31,10 +31,13 @@ export function makeSatelliteService({fetcher=fetch,now=Date.now,persistentCache
  const valid=(d,group)=>d?.schema===1&&d.group===group&&Array.isArray(d.records)&&age(d)>=0&&age(d)<SATELLITE_STALE_TTL;
  const reply=(d,state)=>({...d,refreshAfterSeconds:SATELLITE_TTL/1000,stale:age(d)>=SATELLITE_TTL,cacheState:state});
  async function stored(group){
-  if(valid(memory.get(group),group))return memory.get(group);
-  if(!persistentCache)return null;
-  try{const hit=await persistentCache.match(cacheRequest(group));if(!hit)return null;const d=await hit.json();if(valid(d,group)){memory.set(group,d);return d;}}catch{}
-  return null;
+  // A memory copy past the refresh interval is checked against the shared store,
+  // which an outside job may have refreshed in the meantime.
+  const local=valid(memory.get(group),group)?memory.get(group):null;
+  if(local&&age(local)<SATELLITE_TTL)return local;
+  if(!persistentCache)return local;
+  try{const hit=await persistentCache.match(cacheRequest(group));if(hit){const d=await hit.json();if(valid(d,group)&&(!local||Date.parse(d.retrievedAt)>Date.parse(local.retrievedAt))){memory.set(group,d);return d;}}}catch{}
+  return local;
  }
  const service=async(group,{refresh=true}={})=>{
   if(!SATELLITE_GROUPS.includes(group))throw Error('Choose a supported satellite group.');

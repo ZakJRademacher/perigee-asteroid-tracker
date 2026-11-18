@@ -1,0 +1,31 @@
+name: Refresh satellite orbits
+
+# CelesTrak does not accept connections from Cloudflare Workers, so this job
+# downloads the satellite groups every two hours (CelesTrak's update interval)
+# and writes them into the Worker's KV store.
+on:
+  schedule:
+    - cron: '23 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: refresh-satellites
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+      - name: Download CelesTrak groups and write them to KV
+        run: node tools/refresh-satellites.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
