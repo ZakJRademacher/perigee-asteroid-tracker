@@ -1,10 +1,12 @@
 # Maintaining the Perigee interface
 
-The interface uses installed Segoe UI and Arial fonts. Color and motion should help a reader follow the actual data and controls. Keep units, source credits, qualifications, and status labels visible.
+The interface is built around one full-screen 3D stage. A headline, a distance ladder, camera tools, a details drawer and a media-player-style time bar float over it in glass panels; the forecast and a two-tab catalog (asteroids and satellites) follow below. On screens narrower than 921 px the stage stays on top and the panels flow beneath it. Every selection opens the drawer with an **At a glance** tab in plain language and a **Deep dive** tab with the full numbers.
 
-Edit `design-tokens.json`, then run `python tools/build_theme.py` to update the palette in `dist/studio.css`. Component gradients and motion live in that stylesheet. Test keyboard focus, a 390-pixel viewport, empty and error states, and the reduced-motion preference.
+Headings use Space Grotesk (OFL, vendored by `tools/vendor_font.py` into `dist/vendor/fonts/` with its license and hash); body text uses Segoe UI or the system sans-serif. Color and motion should help a reader follow the actual data and controls. Keep units, source credits, qualifications, and status labels visible.
 
-Run the existing project tests, then the browser check:
+Edit `design-tokens.json`, then run `python tools/build_theme.py` to update the palette in `dist/stage.css`. All component styles, including the 3D overlay markers, live in that one stylesheet. Test keyboard focus, a 390-pixel viewport, empty and error states, and the reduced-motion preference.
+
+Run the existing project tests. `tools/check_visual_refresh.py` was written for the previous layout and needs its selectors updated before it is used again:
 
 ```sh
 python tools/check_visual_refresh.py --url <local URL> --evidence <new evidence folder> --workdir <scratch folder>

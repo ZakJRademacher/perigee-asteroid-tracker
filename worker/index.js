@@ -1,15 +1,19 @@
 import {makeCatalogService} from './catalog.js';
 import {makeHorizonsService} from './horizons.js';
 import {kvCache,warmPositions,BATCH_LIMIT} from './kv.js';
+import {makeSatelliteService,warmSatellites} from './celestrak.js';
+import {makeSatellitePhotoService} from './wikidata.js';
 // __ASSET_TABLE__ is supplied by the deterministic portable Worker build.
-let service,catalogService;
+let service,catalogService,satelliteService,photoService;
 // One catalog and one Horizons service per instance, backed by the shared KV
 // store when it is bound (falls back to the per-colo Cache API otherwise).
 function services(env){
  const persistentCache=env.CACHE?kvCache(env.CACHE):typeof caches!=='undefined'?caches.default:null;
  if(!catalogService){let seed=null;try{seed=JSON.parse(atob(ASSETS['/data/snapshot.json'].data));}catch{}catalogService=makeCatalogService({apiKey:env.NASA_API_KEY||'DEMO_KEY',persistentCache,seed});}
  if(!service){let seed=[];try{const file=ASSETS['/data/horizons-example.json'];if(file)seed=[JSON.parse(atob(file.data))];}catch{}service=makeHorizonsService({persistentCache,seed});}
- return {catalog:catalogService,orbit:service};
+ if(!satelliteService)satelliteService=makeSatelliteService({persistentCache});
+ if(!photoService)photoService=makeSatellitePhotoService({persistentCache});
+ return {catalog:catalogService,orbit:service,satellites:satelliteService,photos:photoService};
 }
 const redact=message=>String(message).replace(/api_key=[^&\s]+/g,'api_key=REDACTED');
 export default {
@@ -18,6 +22,15 @@ export default {
   if(url.pathname==='/api/catalog'){
    if(request.method==='HEAD')return new Response(null,{status:405});
    try{return Response.json(await services(env).catalog(url.searchParams.get('start')),{headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});}catch(e){const bad=/valid|date|start/.test(e.message);if(!bad)console.error('catalog failure',e.name,redact(e.message));return Response.json({error:bad?e.message:/rate.limit/.test(e.message)?'NASA request limit reached; please retry later.':'NASA catalog unavailable; please retry later.'},{status:bad?400:503,headers:{'Cache-Control':'no-store'}});}
+  }
+  if(url.pathname==='/api/satellites'){
+   if(request.method==='HEAD')return new Response(null,{status:405});
+   const group=url.searchParams.get('group')??'';
+   try{return Response.json(await services(env).satellites(group),{headers:{'Cache-Control':'private,max-age=600','X-Content-Type-Options':'nosniff'}});}catch(e){const bad=/supported satellite group/.test(e.message);if(!bad)console.error('satellite failure',group,e.name,e.message);return Response.json({error:bad?e.message:'Satellite orbit data unavailable; please retry later.'},{status:bad?400:503,headers:{'Cache-Control':'no-store'}});}
+  }
+  if(url.pathname==='/api/satellite-photos'){
+   if(request.method==='HEAD')return new Response(null,{status:405});
+   try{return Response.json(await services(env).photos(url.searchParams.get('norad')),{headers:{'Cache-Control':'public,max-age=86400','X-Content-Type-Options':'nosniff'}});}catch(e){const bad=/NORAD/.test(e.message);if(!bad)console.error('photo lookup failure',e.name,e.message);return Response.json({error:bad?e.message:'Photo lookup unavailable; please retry later.',images:[]},{status:bad?400:503,headers:{'Cache-Control':'no-store'}});}
   }
   // Already-cached vectors for several objects at once; never contacts JPL.
   if(url.pathname==='/api/ephemeris/batch'){
@@ -38,7 +51,7 @@ export default {
  // Cron: keep today's window warm so first visitors get positions from the shared store.
  async scheduled(controller,env={},ctx){
   if(!env.CACHE)return;
-  const {catalog,orbit}=services(env),job=warmPositions({kv:env.CACHE,catalog,orbit,start:dateKey()}).then(result=>console.log('position warm-up',JSON.stringify(result))).catch(e=>console.error('position warm-up failed',e.name,redact(e.message)));
-  ctx?.waitUntil?ctx.waitUntil(job):await job;
+  const {catalog,orbit,satellites}=services(env),orbits=warmSatellites(satellites).then(result=>console.log('satellite warm-up',JSON.stringify(result))),job=warmPositions({kv:env.CACHE,catalog,orbit,start:dateKey()}).then(result=>console.log('position warm-up',JSON.stringify(result))).catch(e=>console.error('position warm-up failed',e.name,redact(e.message)));
+  const all=Promise.all([orbits.catch(e=>console.error('satellite warm-up failed',e.name,e.message)),job]);ctx?.waitUntil?ctx.waitUntil(all):await all;
  }
 };

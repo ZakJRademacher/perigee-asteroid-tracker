@@ -17,3 +17,13 @@ Clicking the selected asteroid again clears its details and path while keeping t
 If live catalog retrieval fails, the saved snapshot is labeled, and its actual dated timeline and candidate coverage are used.
 
 While Live clock is enabled and the page is visible, the app checks once per minute whether the catalog refresh interval has elapsed. Background refresh preserves the selected object and scrub time for the same window. Likely nearby candidates are prioritized for downloads; the priority score never substitutes for JPL coordinates. IndexedDB stores successful vectors beyond localStorage's small string quota, with a one-hour source-timestamp expiry and graceful fallback if storage is unavailable. Existing marker meshes are reused, and decorative star redraws are limited to 20 frames per second without repeatedly projecting DOM marker labels.
+
+## Near-Earth satellite field
+
+Satellites and asteroids share one scene and one linear scale; the **Satellites** checkbox (on by default) turns satellites off. At the lunar-distance radii the whole satellite population sits within about 0.11 LD of Earth's center, so while Earth is under five pixels wide the dots are held back and Earth's locator reads "N satellites, zoom in". Zooming toward Earth reveals them while the asteroids stay where they are; the camera can now approach to 1.25 Earth radii at every radius.
+
+Three more radii are measured in kilometres from Earth's center: **10,000 km** (low Earth orbit), **30,000 km** (adds navigation satellites at about 26,600 km) and **50,000 km** (adds the geostationary belt at 42,164 km). The same rule applies: `km per scene unit = radius in km / 7.8`, and Earth keeps its 6,371 km radius on that scale, so it fills much of the low-orbit view. Asteroids are almost never this close; at these radii the asteroid status line says so and points back to the lunar-distance radii. Switching between the lunar-distance and kilometre radii reframes the camera.
+
+Default groups are CelesTrak's space stations, GNSS, weather, science and active geosynchronous lists. **Starlink + OneWeb** adds about 10,500 more objects and downloads only when ticked. Satellite dots are fixed-size points colored by group; their size says nothing about the spacecraft. A dot appears when its SGP4 position is within the chosen radius at the display time and the time is within seven days of that satellite's element epoch. Outside that window the dot is hidden and the status line counts it.
+
+Selecting a satellite draws one orbital period ahead, clipped to the sphere. Play, Live and the slider move satellites with everything else; at Play's one-day-per-second rate they jump between steps, which is expected.
