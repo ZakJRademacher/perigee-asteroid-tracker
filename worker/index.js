@@ -3,8 +3,10 @@ import { makeHorizonsService } from './horizons.js';
 import { kvCache, warmPositions, BATCH_LIMIT } from './kv.js';
 import { makeSatelliteService, warmSatellites } from './celestrak.js';
 import { makeSatellitePhotoService } from './wikidata.js';
+import { makeUpstreamGate, clientKey, LIMITS } from './limit.js';
 // __ASSET_TABLE__ is supplied by the deterministic portable Worker build.
 let service, catalogService, satelliteService, photoService;
+const gates = { catalog: makeUpstreamGate(LIMITS.catalog), orbit: makeUpstreamGate(LIMITS.orbit) };
 // One catalog and one Horizons service per instance, backed by the shared KV
 // store when it is bound (falls back to the per-colo Cache API otherwise).
 function services(env) {
@@ -32,6 +34,25 @@ function services(env) {
   if (!photoService) photoService = makeSatellitePhotoService({ persistentCache });
   return { catalog: catalogService, orbit: service, satellites: satelliteService, photos: photoService };
 }
+// True when this visitor may make another request of this kind that contacts NASA or JPL.
+const bindingFor = { catalog: 'CATALOG_LIMITER', orbit: 'ORBIT_LIMITER' };
+function upstreamAllowed(kind, request, env) {
+  return gates[kind](clientKey(request), env[bindingFor[kind]] ?? null);
+}
+const limited = kind =>
+  Response.json(
+    {
+      error: 'Too many new NASA/JPL lookups from this connection; loading resumes shortly.',
+      retryAfter: LIMITS[kind].period
+    },
+    {
+      status: 429,
+      headers: { 'Cache-Control': 'no-store', 'Retry-After': String(LIMITS[kind].period) }
+    }
+  );
+// Whether a saved catalog lists this object (the page only asks for positions of listed objects).
+const listed = (catalog, id) =>
+  Object.values(catalog.feed.near_earth_objects).some(day => day.some(neo => String(neo.id) === id));
 const redact = message => String(message).replace(/api_key=[^&\s]+/g, 'api_key=REDACTED');
 export default {
   async fetch(request, env = {}) {
@@ -41,7 +62,11 @@ export default {
     if (url.pathname === '/api/catalog') {
       if (request.method === 'HEAD') return new Response(null, { status: 405 });
       try {
-        return Response.json(await services(env).catalog(url.searchParams.get('start')), {
+        const { catalog } = services(env),
+          start = url.searchParams.get('start');
+        const saved = await catalog.peek(start);
+        if (!saved && !(await upstreamAllowed('catalog', request, env))) return limited('catalog');
+        return Response.json(saved ?? (await catalog(start)), {
           headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }
         });
       } catch (e) {
@@ -121,7 +146,22 @@ export default {
     if (url.pathname === '/api/ephemeris') {
       if (request.method === 'HEAD') return new Response(null, { status: 405 });
       try {
-        const data = await services(env).orbit(url.searchParams.get('id'), url.searchParams.get('start'));
+        const { orbit, catalog } = services(env),
+          id = url.searchParams.get('id'),
+          start = url.searchParams.get('start');
+        const saved = await orbit.peek(id, start);
+        if (!saved) {
+          // A position is only fetched for an object in that window's catalog. When the catalog has
+          // expired from the cache, the per-visitor budget alone applies.
+          const window = await catalog.peek(start).catch(() => null);
+          if (window && !listed(window, id))
+            return Response.json(
+              { error: 'This object is not in the catalog for that start date.', retryAfter: null },
+              { status: 404, headers: { 'Cache-Control': 'no-store' } }
+            );
+          if (!(await upstreamAllowed('orbit', request, env))) return limited('orbit');
+        }
+        const data = saved ?? (await orbit(id, start));
         return Response.json(data, {
           headers: { 'Cache-Control': 'private,max-age=300', 'X-Content-Type-Options': 'nosniff' }
         });

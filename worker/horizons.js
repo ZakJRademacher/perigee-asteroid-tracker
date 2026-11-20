@@ -150,7 +150,7 @@ export function makeHorizonsService({
           try {
             response = await fetcher(horizonsURL(id, start), {
               headers: {
-                'User-Agent': 'Perigee/1.3 (https://github.com/ZakJRademacher)',
+                'User-Agent': 'Perigee/1.5 (https://github.com/ZakJRademacher)',
                 Accept: 'application/json'
               },
               signal: controller.signal
