@@ -8,7 +8,7 @@ I developed substantial parts of the JavaScript and Worker implementation alongs
 
 **[Open the live explorer](https://perigee.zakjrademacher.workers.dev/)** · [Methodology](docs/METHODOLOGY.md) · [Run locally](#run-and-verify)
 
-![Perigee's 3D asteroid explorer and encounter timeline](docs/images/perigee-studio.png)
+![Perigee's 3D asteroid explorer and encounter timeline](docs/images/perigee-1.5.0.png)
 
 ## Explore the data
 

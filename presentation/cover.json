@@ -3,18 +3,18 @@
   "eyebrow": "NEAR-EARTH OBSERVATORY",
   "description": "A little perspective on our cosmic neighborhood.",
   "format": "NASA / JPL · JavaScript · Three.js",
-  "image": "docs/images/perigee-schematic-studio.png",
+  "image": "docs/images/perigee-1.5.0.png",
   "tokens": "design-tokens.json",
   "color_roles": {
     "canvas": "bg",
-    "surface": "panel",
-    "ink": "text",
+    "surface": "bg-2",
+    "ink": "ink",
     "muted": "muted",
     "primary": "mint",
     "accent": "amber"
   },
   "frame_label": "NASA / JPL explorer",
-  "preview_note": "2D schematic · illustrative directions",
+  "preview_note": "Live NASA / JPL data · 3D stage · v1.5.0",
   "footer": "THREE.JS / NASA / JPL",
   "preview_mode": "contain"
 }
