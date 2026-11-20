@@ -64,7 +64,8 @@ export function makeCatalogService({
       retrievedAt: seed.retrieved_at,
       feed: publicCatalog(seed.feed)
     });
-  return async start => {
+  const windowFor = start => {
+    catalogWindows(start); // rejects an invalid start date
     const coverage = catalogCoverage(start),
       end = addDays(start, CATALOG_DAYS - 1),
       key = new Request('https://perigee-catalog-cache.invalid/v4-30d-buffer7-public/' + start);
@@ -76,23 +77,35 @@ export function makeCatalogService({
       d.candidateEnd === coverage.end &&
       now() - Date.parse(d.retrievedAt) >= 0 &&
       now() - Date.parse(d.retrievedAt) < ttl;
+    return { coverage, end, key, fresh };
+  };
+  // A saved catalog only (memory, then the shared store); never contacts NASA.
+  async function peek(start) {
+    const { key, fresh } = windowFor(start);
+    if (fresh(memory.get(start)))
+      return { ...memory.get(start), refreshAfterSeconds: ttl / 1000, cacheState: 'shared' };
+    if (!persistentCache) return null;
+    try {
+      const hit = await persistentCache.match(key);
+      if (hit) {
+        const d = await hit.json();
+        if (fresh(d)) {
+          d.feed = publicCatalog(d.feed);
+          memory.set(start, d);
+          return { ...d, refreshAfterSeconds: ttl / 1000, cacheState: 'shared' };
+        }
+      }
+    } catch {}
+    return null;
+  }
+  const getCatalog = async start => {
+    const { coverage, end, key, fresh } = windowFor(start);
     if (fresh(memory.get(start)))
       return { ...memory.get(start), refreshAfterSeconds: ttl / 1000, cacheState: 'shared' };
     if (pending.has(start)) return pending.get(start);
     const task = (async () => {
-      if (persistentCache) {
-        try {
-          const hit = await persistentCache.match(key);
-          if (hit) {
-            const d = await hit.json();
-            if (fresh(d)) {
-              d.feed = publicCatalog(d.feed);
-              memory.set(start, d);
-              return { ...d, refreshAfterSeconds: ttl / 1000, cacheState: 'shared' };
-            }
-          }
-        } catch {}
-      }
+      const saved = await peek(start);
+      if (saved) return saved;
       const job = tail
         .catch(() => {})
         .then(async () => {
@@ -141,4 +154,6 @@ export function makeCatalogService({
     pending.set(start, task);
     return task;
   };
+  getCatalog.peek = peek;
+  return getCatalog;
 }

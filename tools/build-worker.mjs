@@ -41,9 +41,13 @@ const catalogHelper = (
   .join('\n');
 const helper = (
     await Promise.all(
-      ['worker/horizons.js', 'worker/kv.js', 'worker/celestrak.js', 'worker/wikidata.js'].map(file =>
-        readFile(resolve(root, file), 'utf8')
-      )
+      [
+        'worker/horizons.js',
+        'worker/kv.js',
+        'worker/celestrak.js',
+        'worker/wikidata.js',
+        'worker/limit.js'
+      ].map(file => readFile(resolve(root, file), 'utf8'))
     )
   )
     .map(code => code.replace(/^import [\s\S]*?;\s*/gm, '').replace(/^export /gm, ''))
