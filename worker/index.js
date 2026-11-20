@@ -42,7 +42,10 @@ function upstreamAllowed(kind, request, env) {
 const limited = kind =>
   Response.json(
     {
-      error: 'Too many new NASA/JPL lookups from this connection; loading resumes shortly.',
+      error:
+        kind === 'catalog'
+          ? 'Too many new dates from this connection; please try this date again in a minute.'
+          : 'Too many new JPL lookups from this connection; loading resumes shortly.',
       retryAfter: LIMITS[kind].period
     },
     {

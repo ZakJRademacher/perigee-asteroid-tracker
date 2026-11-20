@@ -108,7 +108,9 @@ test('the Worker serves saved answers freely and limits only lookups that would 
     const r = await get(path);
     assert.equal(r.status, 429, path);
     assert.equal(r.headers.get('retry-after'), String(LIMITS[kind].period));
-    assert.equal((await r.json()).retryAfter, LIMITS[kind].period);
+    const body = await r.json();
+    assert.equal(body.retryAfter, LIMITS[kind].period);
+    assert.match(body.error, kind === 'catalog' ? /try this date again/ : /loading resumes/);
     assert.equal(checks.at(-1), kind, 'each kind of lookup uses its own budget');
   }
   assert.deepEqual(upstream, [], 'a limited request never contacts NASA or JPL');
