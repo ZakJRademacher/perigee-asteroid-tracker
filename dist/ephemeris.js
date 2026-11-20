@@ -1,33 +1,248 @@
-import {vectorCache} from './vector-cache.js';
-export const LD_KM=384400;
+import { vectorCache } from './vector-cache.js';
+export const LD_KM = 384400;
 // JPL predictions change slowly; reuse a vector set for a day before refreshing it.
-export const VECTOR_TTL=86400000;
-export const BATCH_SIZE=12;
-export function validEphemeris(data,id,start){return data?.schema===1&&data.id===id&&data.start===start&&data.frame==='Ecliptic of J2000.0'&&data.correction==='NONE; geometric'&&data.center==='Earth (399), body center'&&Array.isArray(data.samples)&&data.samples.length===1441&&Array.isArray(data.samples[0])&&Math.abs(data.samples[0][0]-Date.parse(start+'T00:00:00Z'))<5&&data.samples.every((s,i)=>Array.isArray(s)&&s.length===7&&s.every(Number.isFinite)&&(i===0||Math.abs(s[0]-data.samples[i-1][0]-3600000)<5));}
-export function interpolateState(data,epoch){const a=data?.samples;if(!a?.length||!Number.isFinite(epoch)||epoch<a[0][0]||epoch>a.at(-1)[0])return null;let lo=0,hi=a.length-1;while(lo+1<hi){const m=(lo+hi)>>1;if(a[m][0]<=epoch)lo=m;else hi=m;}const p=a[lo],q=a[hi],dt=(q[0]-p[0])/1000,u=(epoch-p[0])/(q[0]-p[0]),h00=2*u**3-3*u*u+1,h10=u**3-2*u*u+u,h01=-2*u**3+3*u*u,h11=u**3-u*u;const position=[1,2,3].map(k=>h00*p[k]+h10*dt*p[k+3]+h01*q[k]+h11*dt*q[k+3]);return {epoch,position,km:Math.hypot(...position),sampleStep:dt};}
-export function physicalPosition(vector,scaleKm){return {x:vector[0]/scaleKm,y:vector[2]/scaleKm,z:-vector[1]/scaleKm};}
-export function futureTrack(data,epoch,days=30){const end=Math.min(epoch+days*86400000,data.samples.at(-1)[0]),points=[],step=3600000;for(let t=epoch;t<end;t+=step){const s=interpolateState(data,t);if(s)points.push(s);}const last=interpolateState(data,end);if(last)points.push(last);return points;}
+export const VECTOR_TTL = 86400000;
+export const BATCH_SIZE = 12;
+export function validEphemeris(data, id, start) {
+  return (
+    data?.schema === 1 &&
+    data.id === id &&
+    data.start === start &&
+    data.frame === 'Ecliptic of J2000.0' &&
+    data.correction === 'NONE; geometric' &&
+    data.center === 'Earth (399), body center' &&
+    Array.isArray(data.samples) &&
+    data.samples.length === 1441 &&
+    Array.isArray(data.samples[0]) &&
+    Math.abs(data.samples[0][0] - Date.parse(start + 'T00:00:00Z')) < 5 &&
+    data.samples.every(
+      (s, i) =>
+        Array.isArray(s) &&
+        s.length === 7 &&
+        s.every(Number.isFinite) &&
+        (i === 0 || Math.abs(s[0] - data.samples[i - 1][0] - 3600000) < 5)
+    )
+  );
+}
+export function interpolateState(data, epoch) {
+  const a = data?.samples;
+  if (!a?.length || !Number.isFinite(epoch) || epoch < a[0][0] || epoch > a.at(-1)[0]) return null;
+  let lo = 0,
+    hi = a.length - 1;
+  while (lo + 1 < hi) {
+    const m = (lo + hi) >> 1;
+    if (a[m][0] <= epoch) lo = m;
+    else hi = m;
+  }
+  const p = a[lo],
+    q = a[hi],
+    dt = (q[0] - p[0]) / 1000,
+    u = (epoch - p[0]) / (q[0] - p[0]),
+    h00 = 2 * u ** 3 - 3 * u * u + 1,
+    h10 = u ** 3 - 2 * u * u + u,
+    h01 = -2 * u ** 3 + 3 * u * u,
+    h11 = u ** 3 - u * u;
+  const position = [1, 2, 3].map(k => h00 * p[k] + h10 * dt * p[k + 3] + h01 * q[k] + h11 * dt * q[k + 3]);
+  return { epoch, position, km: Math.hypot(...position), sampleStep: dt };
+}
+export function physicalPosition(vector, scaleKm) {
+  return { x: vector[0] / scaleKm, y: vector[2] / scaleKm, z: -vector[1] / scaleKm };
+}
+export function futureTrack(data, epoch, days = 30) {
+  const end = Math.min(epoch + days * 86400000, data.samples.at(-1)[0]),
+    points = [],
+    step = 3600000;
+  for (let t = epoch; t < end; t += step) {
+    const s = interpolateState(data, t);
+    if (s) points.push(s);
+  }
+  const last = interpolateState(data, end);
+  if (last) points.push(last);
+  return points;
+}
 export class EphemerisLoader {
- constructor({fetcher=fetch,onUpdate=()=>{},cache=vectorCache,now=Date.now,batch=false}={}){this.batch=batch;this.batched=new Set();this.fetcher=(...args)=>fetcher(...args);this.onUpdate=onUpdate;this.cache=cache;this.now=now;this.data=new Map();this.errors=new Map();this.pending=[];this.running=false;this.start='';this.generation=0;this.paused=false;this.resumeTimer=0;this.retried=new Set();}
- reset(start){this.start=start;this.generation++;this.data.clear();this.errors.clear();this.pending=[];this.paused=false;clearTimeout(this.resumeTimer);this.resumeTimer=0;this.retried.clear();this.batched.clear();}
- // A backoff pauses the shared queue, then resumes it on its own. The failed
- // object gets one automatic retry; a repeat failure stays reported.
- scheduleResume(id,seconds){clearTimeout(this.resumeTimer);const generation=this.generation;this.resumeTimer=setTimeout(()=>{this.resumeTimer=0;if(generation!==this.generation||!this.paused)return;this.paused=false;if(!this.retried.has(id)){this.retried.add(id);this.errors.delete(id);}this.onUpdate();},Math.max(1,seconds)*1000);}
- ensure(rows,selected){if(this.paused)return;const ids=[...new Set(rows.map(r=>r.id))];this.pending=this.pending.filter(id=>ids.includes(id));for(const id of ids)if(!this.data.has(id)&&!this.errors.has(id)&&!this.pending.includes(id)&&id!==this.current)this.pending.push(id);const chosen=rows.find(r=>r.key===selected)?.id;if(chosen&&this.pending.includes(chosen)){this.pending=this.pending.filter(id=>id!==chosen);this.pending.unshift(chosen);}if(this.pending.length)this.pump();}
- async pump(){if(this.running||this.paused)return;this.running=true;try{while(this.pending.length&&!this.paused){if(this.batch&&await this.loadBatch())continue;const id=this.pending.shift(),start=this.start,generation=this.generation;this.current=id;
-   try{const key='perigee-horizons-60d-'+start+'-'+id;let data;try{const old=await this.cache.get(key);if(validEphemeris(old,id,start)&&this.now()-Date.parse(old.retrievedAt)>=0&&this.now()-Date.parse(old.retrievedAt)<VECTOR_TTL)data=old;}catch{}
-    if(!data){const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),35000);try{const r=await this.fetcher('/api/ephemeris?id='+id+'&start='+start,{signal:controller.signal});const body=await r.json();if(!r.ok){const e=Error(body.error??'JPL request failed.');e.retryAfter=body.retryAfter;throw e;}if(!validEphemeris(body,id,start))throw Error('Invalid ephemeris response.');data=body;try{await this.cache.set(key,data);}catch{}}finally{clearTimeout(timeout);}}
-    if(generation===this.generation)this.data.set(id,data);
-   }catch(e){if(generation===this.generation){this.errors.set(id,e.name==='AbortError'?'JPL request timed out.':e.message);if(e.retryAfter){this.paused=true;this.pending=[];this.scheduleResume(id,Number(e.retryAfter)||10);}}}
-   finally{this.current=null;this.onUpdate();}
-  }}finally{this.running=false;this.onUpdate();}}
- // Before loading one at a time, take up to BATCH_SIZE objects from the local
- // cache or, in one request, from the server's shared store. Objects neither
- // has stay queued for the normal one-by-one JPL path.
- async loadBatch(){const ids=this.pending.filter(id=>!this.batched.has(id)).slice(0,BATCH_SIZE);if(!ids.length)return false;const start=this.start,generation=this.generation,found=new Map();for(const id of ids)this.batched.add(id);
-  for(const id of ids){try{const old=await this.cache.get('perigee-horizons-60d-'+start+'-'+id);if(validEphemeris(old,id,start)&&this.now()-Date.parse(old.retrievedAt)>=0&&this.now()-Date.parse(old.retrievedAt)<VECTOR_TTL)found.set(id,old);}catch{}}
-  const remote=ids.filter(id=>!found.has(id));
-  if(remote.length){const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),35000);try{const r=await this.fetcher('/api/ephemeris/batch?start='+start+'&ids='+remote.join(','),{signal:controller.signal});if(r.ok){const body=await r.json();for(const id of remote){const data=body?.vectors?.[id];if(validEphemeris(data,id,start)){found.set(id,data);try{await this.cache.set('perigee-horizons-60d-'+start+'-'+id,data);}catch{}}}}}catch{}finally{clearTimeout(timeout);}}
-  if(generation!==this.generation)return true;
-  for(const [id,data] of found)this.data.set(id,data);this.pending=this.pending.filter(id=>!found.has(id));this.onUpdate();return true;}
+  constructor({
+    fetcher = fetch,
+    onUpdate = () => {},
+    cache = vectorCache,
+    now = Date.now,
+    batch = false
+  } = {}) {
+    this.batch = batch;
+    this.batched = new Set();
+    this.fetcher = (...args) => fetcher(...args);
+    this.onUpdate = onUpdate;
+    this.cache = cache;
+    this.now = now;
+    this.data = new Map();
+    this.errors = new Map();
+    this.pending = [];
+    this.running = false;
+    this.start = '';
+    this.generation = 0;
+    this.paused = false;
+    this.resumeTimer = 0;
+    this.retried = new Set();
+  }
+  reset(start) {
+    this.start = start;
+    this.generation++;
+    this.data.clear();
+    this.errors.clear();
+    this.pending = [];
+    this.paused = false;
+    clearTimeout(this.resumeTimer);
+    this.resumeTimer = 0;
+    this.retried.clear();
+    this.batched.clear();
+  }
+  // A backoff pauses the shared queue, then resumes it on its own. The failed
+  // object gets one automatic retry; a repeat failure stays reported.
+  scheduleResume(id, seconds) {
+    clearTimeout(this.resumeTimer);
+    const generation = this.generation;
+    this.resumeTimer = setTimeout(
+      () => {
+        this.resumeTimer = 0;
+        if (generation !== this.generation || !this.paused) return;
+        this.paused = false;
+        if (!this.retried.has(id)) {
+          this.retried.add(id);
+          this.errors.delete(id);
+        }
+        this.onUpdate();
+      },
+      Math.max(1, seconds) * 1000
+    );
+  }
+  ensure(rows, selected) {
+    if (this.paused) return;
+    const ids = [...new Set(rows.map(r => r.id))];
+    this.pending = this.pending.filter(id => ids.includes(id));
+    for (const id of ids)
+      if (!this.data.has(id) && !this.errors.has(id) && !this.pending.includes(id) && id !== this.current)
+        this.pending.push(id);
+    const chosen = rows.find(r => r.key === selected)?.id;
+    if (chosen && this.pending.includes(chosen)) {
+      this.pending = this.pending.filter(id => id !== chosen);
+      this.pending.unshift(chosen);
+    }
+    if (this.pending.length) this.pump();
+  }
+  async pump() {
+    if (this.running || this.paused) return;
+    this.running = true;
+    try {
+      while (this.pending.length && !this.paused) {
+        if (this.batch && (await this.loadBatch())) continue;
+        const id = this.pending.shift(),
+          start = this.start,
+          generation = this.generation;
+        this.current = id;
+        try {
+          const key = 'perigee-horizons-60d-' + start + '-' + id;
+          let data;
+          try {
+            const old = await this.cache.get(key);
+            if (
+              validEphemeris(old, id, start) &&
+              this.now() - Date.parse(old.retrievedAt) >= 0 &&
+              this.now() - Date.parse(old.retrievedAt) < VECTOR_TTL
+            )
+              data = old;
+          } catch {}
+          if (!data) {
+            const controller = new AbortController(),
+              timeout = setTimeout(() => controller.abort(), 35000);
+            try {
+              const r = await this.fetcher('/api/ephemeris?id=' + id + '&start=' + start, {
+                signal: controller.signal
+              });
+              const body = await r.json();
+              if (!r.ok) {
+                const e = Error(body.error ?? 'JPL request failed.');
+                e.retryAfter = body.retryAfter;
+                throw e;
+              }
+              if (!validEphemeris(body, id, start)) throw Error('Invalid ephemeris response.');
+              data = body;
+              try {
+                await this.cache.set(key, data);
+              } catch {}
+            } finally {
+              clearTimeout(timeout);
+            }
+          }
+          if (generation === this.generation) this.data.set(id, data);
+        } catch (e) {
+          if (generation === this.generation) {
+            this.errors.set(id, e.name === 'AbortError' ? 'JPL request timed out.' : e.message);
+            if (e.retryAfter) {
+              this.paused = true;
+              this.pending = [];
+              this.scheduleResume(id, Number(e.retryAfter) || 10);
+            }
+          }
+        } finally {
+          this.current = null;
+          this.onUpdate();
+        }
+      }
+    } finally {
+      this.running = false;
+      this.onUpdate();
+    }
+  }
+  // Before loading one at a time, take up to BATCH_SIZE objects from the local
+  // cache or, in one request, from the server's shared store. Objects neither
+  // has stay queued for the normal one-by-one JPL path.
+  async loadBatch() {
+    const ids = this.pending.filter(id => !this.batched.has(id)).slice(0, BATCH_SIZE);
+    if (!ids.length) return false;
+    const start = this.start,
+      generation = this.generation,
+      found = new Map();
+    for (const id of ids) this.batched.add(id);
+    for (const id of ids) {
+      try {
+        const old = await this.cache.get('perigee-horizons-60d-' + start + '-' + id);
+        if (
+          validEphemeris(old, id, start) &&
+          this.now() - Date.parse(old.retrievedAt) >= 0 &&
+          this.now() - Date.parse(old.retrievedAt) < VECTOR_TTL
+        )
+          found.set(id, old);
+      } catch {}
+    }
+    const remote = ids.filter(id => !found.has(id));
+    if (remote.length) {
+      const controller = new AbortController(),
+        timeout = setTimeout(() => controller.abort(), 35000);
+      try {
+        const r = await this.fetcher('/api/ephemeris/batch?start=' + start + '&ids=' + remote.join(','), {
+          signal: controller.signal
+        });
+        if (r.ok) {
+          const body = await r.json();
+          for (const id of remote) {
+            const data = body?.vectors?.[id];
+            if (validEphemeris(data, id, start)) {
+              found.set(id, data);
+              try {
+                await this.cache.set('perigee-horizons-60d-' + start + '-' + id, data);
+              } catch {}
+            }
+          }
+        }
+      } catch {
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+    if (generation !== this.generation) return true;
+    for (const [id, data] of found) this.data.set(id, data);
+    this.pending = this.pending.filter(id => !found.has(id));
+    this.onUpdate();
+    return true;
+  }
 }

@@ -1,0 +1,11 @@
+dist/vendor/
+dist/server/
+dist/data/
+dist/assets/
+evidence/
+deliverables/
+presentation/
+node_modules/
+*.json
+*.html
+*.md
