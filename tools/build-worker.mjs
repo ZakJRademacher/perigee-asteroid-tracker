@@ -11,6 +11,7 @@ const types = {
   '.svg': 'image/svg+xml',
   '.gif': 'image/gif',
   '.jpg': 'image/jpeg',
+  '.png': 'image/png',
   '.txt': 'text/plain;charset=utf-8',
   '.woff2': 'font/woff2',
   '.md': 'text/markdown;charset=utf-8'
