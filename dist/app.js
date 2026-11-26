@@ -686,13 +686,20 @@ function bodyDeep(name) {
 
 // ---------- stage ----------
 function renderHeadline(asteroidCount, satelliteCount) {
+  // Built from elements and text nodes: the radius comes from the page, so it is never parsed as HTML.
   const parts = [];
+  const count = value => Object.assign(document.createElement('b'), { textContent: value });
   if (asteroidsOn())
-    parts.push(
-      `<b>${asteroidCount}</b> asteroid${asteroidCount === 1 ? '' : 's'} within ${nearEarth() ? fmt(radiusKm(), 0) + ' km' : radiusInput().value + ' Moon distances'}`
-    );
-  if (satellitesOn()) parts.push(`<b>${fmt(satelliteCount, 0)}</b> satellites around Earth`);
-  $('#stage-headline').innerHTML = parts.length ? parts.join(' and ') : 'Turn on a layer to fill the sky';
+    parts.push([
+      count(asteroidCount),
+      ` asteroid${asteroidCount === 1 ? '' : 's'} within ${nearEarth() ? fmt(radiusKm(), 0) + ' km' : radiusInput().value + ' Moon distances'}`
+    ]);
+  if (satellitesOn()) parts.push([count(fmt(satelliteCount, 0)), ' satellites around Earth']);
+  $('#stage-headline').replaceChildren(
+    ...(parts.length
+      ? parts.flatMap((part, i) => (i ? [' and ', ...part] : part))
+      : ['Turn on a layer to fill the sky'])
+  );
   $('#position-epoch-label').textContent =
     ($('#live-clock').checked ? 'Live · ' : 'Viewing · ') + longDate(positionEpoch);
 }
