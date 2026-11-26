@@ -2,13 +2,13 @@
 
 ![JavaScript](https://img.shields.io/badge/JavaScript-8A7018?style=flat-square) ![Three.js](https://img.shields.io/badge/Three.js-31464D?style=flat-square) ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-A85C24?style=flat-square)
 
+![Perigee's 3D asteroid explorer and encounter timeline](docs/images/perigee-1.5.0.png)
+
 Perigee turns NASA/JPL encounter data and CelesTrak orbit data into one full-screen 3D stage of the asteroids passing Earth and the satellites circling it. Scrub or play a 30-day timeline, tap anything to meet it, and switch between a plain-language **At a glance** view and a technical **Deep dive**.
 
 I developed substantial parts of the JavaScript and Worker implementation alongside the concept, feature requirements, and visual direction. The project uses Three.js for the 3D view and a Cloudflare Worker for the data endpoints.
 
 **[Open the live explorer](https://perigee.zakjrademacher.workers.dev/)** · [Methodology](docs/METHODOLOGY.md) · [Run locally](#run-and-verify)
-
-![Perigee's 3D asteroid explorer and encounter timeline](docs/images/perigee-1.5.0.png)
 
 ## Explore the data
 

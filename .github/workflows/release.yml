@@ -1,0 +1,21 @@
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  attribution:
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/attribution.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+
+  release:
+    needs: attribution
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/release.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+    permissions:
+      contents: write
+    secrets:
+      blocked-names: ${{ secrets.PORTFOLIO_BLOCKED }}
+      blocked-stems: ${{ secrets.PORTFOLIO_BLOCKED_STEMS }}

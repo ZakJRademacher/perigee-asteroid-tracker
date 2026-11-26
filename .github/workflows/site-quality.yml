@@ -1,0 +1,18 @@
+name: site-quality
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  site:
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/site-quality.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+    with:
+      url: https://perigee.zakjrademacher.workers.dev/
+    secrets:
+      blocked-names: ${{ secrets.PORTFOLIO_BLOCKED }}
+      blocked-stems: ${{ secrets.PORTFOLIO_BLOCKED_STEMS }}
